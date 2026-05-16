@@ -6,11 +6,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "migrate:products": "node scripts/migrate_products.js",
+    "migrate:orders": "node scripts/migrate_orders.js",
+    "migrate:all": "node scripts/migrate_products.js && node scripts/migrate_orders.js",
+    "update:stock": "node scripts/update_stock.js"
   },
   "dependencies": {
+    "firebase-admin": "^10.3.0",
     "lucide-react": "^0.344.0",
-    "next": "^14.0.0",
+    "next": "^16.2.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
