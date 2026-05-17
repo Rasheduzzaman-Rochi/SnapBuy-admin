@@ -6,12 +6,22 @@ import { Order } from '@/types/order';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { DataTableWrapper } from '@/components/ui/DataTableWrapper';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface OrdersTableProps {
   orders: Order[];
 }
 
 export function OrdersTable({ orders }: OrdersTableProps) {
+  if (orders.length === 0) {
+    return (
+      <EmptyState
+        title="No orders found"
+        description="Try adjusting your search or filters to find matching orders."
+      />
+    );
+  }
+
   const getPaymentBadgeVariant = (status: string): 'success' | 'warning' | 'danger' | 'info' => {
     switch (status) {
       case 'paid':
@@ -46,23 +56,23 @@ export function OrdersTable({ orders }: OrdersTableProps) {
   return (
     <DataTableWrapper>
       <table className="w-full">
-        <thead className="bg-slate-50 border-b border-slate-200">
+        <thead className="bg-slate-50 border-b border-slate-200 dark:bg-slate-900 dark:border-slate-800">
           <tr>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">Order ID</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden sm:table-cell">Customer</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">Amount</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden md:table-cell">Payment</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">Status</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden lg:table-cell">Date</th>
-            <th className="px-6 py-4 text-center text-xs font-bold text-slate-900 uppercase tracking-wider">Action</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider dark:text-slate-100">Order ID</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden sm:table-cell dark:text-slate-100">Customer</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider dark:text-slate-100">Amount</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden md:table-cell dark:text-slate-100">Payment</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider dark:text-slate-100">Status</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden lg:table-cell dark:text-slate-100">Date</th>
+            <th className="px-6 py-4 text-center text-xs font-bold text-slate-900 uppercase tracking-wider dark:text-slate-100">Action</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
           {orders.map((order) => (
-            <tr key={order.id} className="hover:bg-slate-50 transition-colors">
-              <td className="px-6 py-4 text-sm font-semibold text-slate-900">{order.id}</td>
-              <td className="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell">{order.customerName}</td>
-              <td className="px-6 py-4 text-sm font-medium text-slate-900">{formatCurrency(order.total)}</td>
+            <tr key={order.id} className="hover:bg-slate-50 transition-colors dark:hover:bg-slate-800/60">
+              <td className="px-6 py-4 text-sm font-semibold text-slate-900 dark:text-slate-100">{order.id}</td>
+              <td className="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell dark:text-slate-400">{order.customerName}</td>
+              <td className="px-6 py-4 text-sm font-medium text-slate-900 dark:text-slate-100">{formatCurrency(order.total)}</td>
               <td className="px-6 py-4 hidden md:table-cell">
                 <StatusBadge
                   text={order.paymentStatus === 'paid_test' ? 'Paid (Test)' : order.paymentStatus}
@@ -77,11 +87,11 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                   size="sm"
                 />
               </td>
-              <td className="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell">{formatDate(order.createdAt)}</td>
+              <td className="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell dark:text-slate-400">{formatDate(order.createdAt)}</td>
               <td className="px-6 py-4 text-center">
                 <Link
                   href={`/orders/${order.id}`}
-                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors dark:hover:bg-blue-500/10 dark:text-blue-300"
                 >
                   <Eye size={16} />
                   <span className="hidden sm:inline">View</span>

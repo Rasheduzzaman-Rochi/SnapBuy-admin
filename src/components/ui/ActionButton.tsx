@@ -14,9 +14,9 @@ interface ActionButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary: 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800',
-  secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300',
+  secondary: 'bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700',
   danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800',
-  ghost: 'text-slate-600 hover:bg-slate-100 active:bg-slate-200',
+  ghost: 'text-slate-600 hover:bg-slate-100 active:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

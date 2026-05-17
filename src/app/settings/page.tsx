@@ -1,28 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { AdminSettings } from '@/components/settings/AdminSettings';
 import { SellerSettings } from '@/components/settings/SellerSettings';
-import { getCurrentMockRole, UserRole } from '@/lib/mockAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function SettingsPage() {
-  const [role, setRole] = useState<UserRole | null>(null);
-
-  useEffect(() => {
-    setRole(getCurrentMockRole());
-  }, []);
+  const { role, loading } = useAuth();
 
   // Show loading state while checking role
-  if (role === null) {
+  if (loading || !role) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-slate-300 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-            <p className="text-slate-600 mt-4">Loading settings...</p>
-          </div>
+        <div className="flex min-h-[50vh] items-center justify-center text-slate-600 dark:text-slate-300">
+          Loading settings...
         </div>
       </DashboardLayout>
     );

@@ -19,13 +19,13 @@ import { ActionButton } from '@/components/ui/ActionButton';
 import { InfoRow } from '@/components/ui/InfoRow';
 import { RoleBadge } from '@/components/ui/RoleBadge';
 import { mockAdminUser } from '@/lib/mockAuth';
+import { logout } from '@/services/authService';
 
 export function AdminSettings() {
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('snapbuy_mock_role');
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
   };
 

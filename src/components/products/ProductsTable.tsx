@@ -47,19 +47,19 @@ export function ProductsTable({ products }: ProductsTableProps) {
   return (
     <DataTableWrapper>
       <table className="w-full">
-        <thead className="bg-slate-50 border-b border-slate-200">
+        <thead className="bg-slate-50 border-b border-slate-200 dark:bg-slate-900 dark:border-slate-800">
           <tr>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">Product</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden sm:table-cell">Category</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider">Price</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden md:table-cell">Stock</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden lg:table-cell">Status</th>
-            <th className="px-6 py-4 text-center text-xs font-bold text-slate-900 uppercase tracking-wider">Actions</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider dark:text-slate-100">Product</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden sm:table-cell dark:text-slate-100">Category</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider dark:text-slate-100">Price</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden md:table-cell dark:text-slate-100">Stock</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-slate-900 uppercase tracking-wider hidden lg:table-cell dark:text-slate-100">Status</th>
+            <th className="px-6 py-4 text-center text-xs font-bold text-slate-900 uppercase tracking-wider dark:text-slate-100">Actions</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
           {products.map((product) => (
-            <tr key={product.id} className="hover:bg-slate-50 transition-colors">
+            <tr key={product.id} className="hover:bg-slate-50 transition-colors dark:hover:bg-slate-800/60">
               <td className="px-6 py-4">
                 <div className="flex items-center gap-4">
                   <img
@@ -68,13 +68,13 @@ export function ProductsTable({ products }: ProductsTableProps) {
                     className="w-12 h-12 rounded-lg object-cover border border-slate-200"
                   />
                   <div className="flex-1">
-                    <p className="font-semibold text-slate-900 text-sm">{product.name}</p>
-                    <p className="text-xs text-slate-500 sm:hidden">{product.category}</p>
+                    <p className="font-semibold text-slate-900 text-sm dark:text-slate-100">{product.name}</p>
+                    <p className="text-xs text-slate-500 sm:hidden dark:text-slate-400">{product.category}</p>
                   </div>
                 </div>
               </td>
-              <td className="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell">{product.category}</td>
-              <td className="px-6 py-4 text-sm font-semibold text-slate-900">{formatCurrency(product.price)}</td>
+              <td className="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell dark:text-slate-400">{product.category}</td>
+              <td className="px-6 py-4 text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(product.price)}</td>
               <td className="px-6 py-4 hidden md:table-cell">
                 <StatusBadge
                   text={getStockLabel(product.stock)}

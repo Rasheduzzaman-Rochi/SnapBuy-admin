@@ -20,13 +20,13 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { InfoRow } from '@/components/ui/InfoRow';
 import { RoleBadge } from '@/components/ui/RoleBadge';
 import { mockSellerUser } from '@/lib/mockAuth';
+import { logout } from '@/services/authService';
 
 export function SellerSettings() {
   const router = useRouter();
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('snapbuy_mock_role');
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
   };
 

@@ -1,35 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { UsersTable } from '@/components/users/UsersTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { AccessDenied } from '@/components/ui/AccessDenied';
 import { mockUsers } from '@/data/mockData';
-import { getCurrentMockRole } from '@/lib/mockAuth';
+import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function UsersPage() {
-  const [role, setRole] = useState<'admin' | 'seller' | null>(null);
+  const { query } = useDashboardSearch();
+  const { role, loading } = useAuth();
 
-  useEffect(() => {
-    setRole(getCurrentMockRole());
-  }, []);
-
-  // Show loading state while checking role
-  if (role === null) {
+  if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-slate-300 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-            <p className="text-slate-600 mt-4">Loading...</p>
-          </div>
+        <div className="flex min-h-[50vh] items-center justify-center text-slate-600 dark:text-slate-300">
+          Loading users...
         </div>
       </DashboardLayout>
     );
   }
 
-  // Show access denied for sellers
+  // Show loading state while checking role
   if (role !== 'admin') {
     return (
       <DashboardLayout>
@@ -38,17 +31,24 @@ export default function UsersPage() {
     );
   }
 
+  const searchTerm = query.trim().toLowerCase();
+  const filteredUsers = mockUsers.filter((user) =>
+    user.name.toLowerCase().includes(searchTerm) ||
+    user.email.toLowerCase().includes(searchTerm) ||
+    user.phone.toLowerCase().includes(searchTerm)
+  );
+
   return (
     <DashboardLayout>
       <div className="mx-auto w-full max-w-7xl space-y-8">
         {/* Header */}
         <PageHeader
           title="Users"
-          description={`${mockUsers.length} registered customer${mockUsers.length !== 1 ? 's' : ''}`}
+          description={`${filteredUsers.length} registered customer${filteredUsers.length !== 1 ? 's' : ''}`}
         />
 
         {/* Users Table */}
-        <UsersTable users={mockUsers} />
+        <UsersTable users={filteredUsers} />
       </div>
     </DashboardLayout>
   );

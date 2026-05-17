@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Package, ShoppingCart, DollarSign, Clock, AlertCircle, Users, CheckCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
@@ -8,22 +7,28 @@ import { RecentOrdersTable } from '@/components/dashboard/RecentOrdersTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { mockOrders, mockProducts, mockUsers, mockSellerApplications } from '@/data/mockData';
-import { getCurrentMockRole, mockAdminUser, mockSellerUser } from '@/lib/mockAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function DashboardPage() {
-  const [role, setRole] = useState<'admin' | 'seller'>('admin');
+  const { user, role, loading } = useAuth();
 
-  useEffect(() => {
-    setRole(getCurrentMockRole());
-  }, []);
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex min-h-[50vh] items-center justify-center text-slate-600 dark:text-slate-300">
+          Loading dashboard...
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   // Filter data based on role
-  const currentSellerId = role === 'seller' ? mockSellerUser.uid : null;
-  const sellerProducts = currentSellerId 
-    ? mockProducts.filter(p => p.sellerId === currentSellerId)
+  const currentSellerId = role === 'approved' ? user?.uid ?? null : null;
+  const sellerProducts = currentSellerId
+    ? mockProducts.filter((p) => p.sellerId === currentSellerId)
     : mockProducts;
   const sellerOrders = currentSellerId
-    ? mockOrders.filter(o => o.sellerId === currentSellerId)
+    ? mockOrders.filter((o) => o.sellerId === currentSellerId)
     : mockOrders;
 
   // Admin stats

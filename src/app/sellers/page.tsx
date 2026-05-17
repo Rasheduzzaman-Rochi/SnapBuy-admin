@@ -12,6 +12,7 @@ import {
   approveSeller,
   rejectSeller,
 } from '@/services/sellerService';
+import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
 
 export default function SellersPage() {
   const [user, setUser] = useState<any | null>(null);
@@ -19,6 +20,7 @@ export default function SellersPage() {
   const [applications, setApplications] = useState<SellerApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { query } = useDashboardSearch();
 
   useEffect(() => {
     let mounted = true;
@@ -116,6 +118,13 @@ export default function SellersPage() {
   }
 
   const pendingCount = applications.filter((a) => (a.status || 'pending') === 'pending').length;
+  const searchTerm = query.trim().toLowerCase();
+  const filteredApplications = applications.filter((app) =>
+    app.shopName.toLowerCase().includes(searchTerm) ||
+    app.ownerName.toLowerCase().includes(searchTerm) ||
+    app.email.toLowerCase().includes(searchTerm) ||
+    app.phone.toLowerCase().includes(searchTerm)
+  );
 
   return (
     <DashboardLayout>
@@ -126,9 +135,13 @@ export default function SellersPage() {
         {error && <p className="text-red-600">Error: {error}</p>}
         {!loading && applications.length === 0 && <p className="text-slate-600">No seller applications found.</p>}
 
-        {!loading && applications.length > 0 && (
+        {!loading && applications.length > 0 && filteredApplications.length === 0 && (
+          <p className="text-slate-600">No seller applications match your search.</p>
+        )}
+
+        {!loading && filteredApplications.length > 0 && (
           <SellerApplicationsTable
-            applications={applications}
+            applications={filteredApplications}
             onApprove={handleApprove}
             onReject={handleReject}
             adminUid={user.uid}

@@ -21,14 +21,19 @@ body {
   color: #0f172a;
 }
 
+html.dark body {
+  background-color: #020617;
+  color: #e2e8f0;
+}
+
 /* Form inputs */
 @layer components {
   .input-field {
-    @apply w-full px-4 py-2.5 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+    @apply w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-500 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500;
   }
 
   .input-field:disabled {
-    @apply bg-slate-50 cursor-not-allowed;
+    @apply bg-slate-50 cursor-not-allowed dark:bg-slate-900;
   }
 
   /* Textarea */
@@ -39,7 +44,7 @@ body {
   /* Select */
   .select-field {
     @apply input-field appearance-none cursor-pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23cbd5e1' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 1rem center;
     padding-right: 2.5rem;
@@ -47,7 +52,7 @@ body {
 
   /* Card */
   .card {
-    @apply bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow;
+    @apply rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-slate-800 dark:bg-slate-900;
   }
 
   .card-compact {
@@ -64,11 +69,11 @@ body {
 
   /* Table styles */
   .table-head {
-    @apply bg-slate-50 border-b border-slate-200;
+    @apply border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900;
   }
 
   .table-row {
-    @apply border-b border-slate-200 hover:bg-slate-50 transition-colors;
+    @apply border-b border-slate-200 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900;
   }
 
   .table-cell {
@@ -76,7 +81,7 @@ body {
   }
 
   .table-header {
-    @apply px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider;
+    @apply px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400;
   }
 
   /* Badges */
@@ -106,7 +111,7 @@ body {
   }
 
   .btn-secondary {
-    @apply bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300;
+    @apply bg-slate-100 text-slate-900 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700;
   }
 
   .btn-danger {
@@ -114,7 +119,7 @@ body {
   }
 
   .btn-ghost {
-    @apply text-slate-600 hover:bg-slate-100 active:bg-slate-200;
+    @apply text-slate-600 hover:bg-slate-100 active:bg-slate-200 dark:text-slate-300 dark:hover:bg-slate-800;
   }
 }
 
@@ -135,5 +140,17 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+html.dark ::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
 
