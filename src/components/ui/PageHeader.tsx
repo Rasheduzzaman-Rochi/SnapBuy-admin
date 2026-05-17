@@ -27,12 +27,12 @@ export function PageHeader({ title, description, action, breadcrumb }: PageHeade
           ))}
         </nav>
       )}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex-1">
-          <h1 className="text-4xl font-bold text-slate-900">{title}</h1>
-          {description && <p className="text-slate-600 mt-2">{description}</p>}
+          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl lg:text-4xl">{title}</h1>
+          {description && <p className="mt-2 text-sm text-slate-600 sm:text-base">{description}</p>}
         </div>
-        {action && <div className="flex-shrink-0">{action}</div>}
+        {action && <div className="flex w-full items-center sm:w-auto sm:justify-end">{action}</div>}
       </div>
     </div>
   );

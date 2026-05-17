@@ -36,7 +36,7 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 max-w-4xl">
+      <div className="mx-auto w-full max-w-4xl space-y-8">
         {/* Header */}
         <PageHeader
           title={pageTitle}

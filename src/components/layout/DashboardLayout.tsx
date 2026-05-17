@@ -14,7 +14,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <Sidebar />
       <Topbar />
       <main className="md:ml-64 pt-16">
-        <div className="px-4 py-8 md:px-8 md:py-12 max-w-7xl">{children}</div>
+        <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+          {children}
+        </div>
       </main>
     </div>
   );

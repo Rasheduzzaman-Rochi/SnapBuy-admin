@@ -9,9 +9,12 @@ import { ActionButton } from '@/components/ui/ActionButton';
 
 interface SellerApplicationsTableProps {
   applications: SellerApplication[];
+  onApprove?: (uid: string) => Promise<void> | void;
+  onReject?: (uid: string) => Promise<void> | void;
+  adminUid?: string;
 }
 
-export function SellerApplicationsTable({ applications }: SellerApplicationsTableProps) {
+export function SellerApplicationsTable({ applications, onApprove, onReject }: SellerApplicationsTableProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
@@ -52,8 +55,10 @@ export function SellerApplicationsTable({ applications }: SellerApplicationsTabl
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200">
-          {applications.map((app) => (
-            <tr key={app.uid} className="hover:bg-slate-50 transition-colors">
+          {applications.map((app) => {
+            const status = (app.status || 'pending').toString().toLowerCase();
+            return (
+              <tr key={app.uid} className="hover:bg-slate-50 transition-colors">
               <td className="px-6 py-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-900">{app.shopName}</p>
@@ -70,20 +75,21 @@ export function SellerApplicationsTable({ applications }: SellerApplicationsTabl
               <td className="px-6 py-4 text-sm text-slate-600 hidden md:table-cell">{app.category}</td>
               <td className="px-6 py-4">
                 <StatusBadge
-                  text={app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                  variant={getStatusVariant(app.status)}
+                  text={status.charAt(0).toUpperCase() + status.slice(1)}
+                  variant={getStatusVariant(status)}
                   size="sm"
                 />
               </td>
               <td className="px-6 py-4 text-sm text-slate-600 hidden lg:table-cell">{formatDate(app.createdAt)}</td>
               <td className="px-6 py-4">
-                {app.status === 'pending' && (
+                {status === 'pending' && (
                   <div className="flex items-center justify-center gap-2">
                     <ActionButton
                       variant="primary"
                       size="sm"
                       icon={<Check size={16} />}
                       title="Approve"
+                      onClick={() => onApprove && onApprove(app.uid)}
                     >
                       <span className="hidden sm:inline">Approve</span>
                     </ActionButton>
@@ -92,19 +98,21 @@ export function SellerApplicationsTable({ applications }: SellerApplicationsTabl
                       size="sm"
                       icon={<X size={16} />}
                       title="Reject"
+                      onClick={() => onReject && onReject(app.uid)}
                     >
                       <span className="hidden sm:inline">Reject</span>
                     </ActionButton>
                   </div>
                 )}
-                {app.status !== 'pending' && (
+                {status !== 'pending' && (
                   <span className="text-xs text-slate-500 font-medium">
-                    {app.status === 'approved' ? '✓ Approved' : '✕ Rejected'}
+                    {status === 'approved' ? '✓ Approved' : '✕ Rejected'}
                   </span>
                 )}
               </td>
             </tr>
-          ))}
+          );
+          })}
         </tbody>
       </table>
     </DataTableWrapper>

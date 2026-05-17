@@ -46,7 +46,7 @@ export default function OrdersPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="mx-auto w-full max-w-7xl space-y-8">
         {/* Header */}
         <PageHeader
           title={pageTitle}

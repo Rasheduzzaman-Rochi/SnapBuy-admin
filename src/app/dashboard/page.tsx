@@ -53,7 +53,7 @@ export default function DashboardPage() {
           />
 
           {/* Admin Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
               title="Total Sellers"
               value={totalSellers}
@@ -99,8 +99,8 @@ export default function DashboardPage() {
           </div>
 
           {/* Recent Orders Table */}
-          <div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-6">Recent Orders</h2>
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-slate-900">Recent Orders</h2>
             <RecentOrdersTable />
           </div>
         </div>
@@ -171,8 +171,8 @@ export default function DashboardPage() {
         )}
 
         {/* Recent Orders Table */}
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-6">My Recent Orders</h2>
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold text-slate-900">My Recent Orders</h2>
           <RecentOrdersTable orders={sellerOrders.slice(0, 5)} />
         </div>
 

@@ -27,19 +27,36 @@ export async function getSellerApplications(): Promise<SellerApplication[]> {
     const querySnapshot = await getDocs(appsRef);
     const apps: SellerApplication[] = [];
 
-    querySnapshot.forEach((doc) => {
+    querySnapshot.forEach((d) => {
+      const data = d.data() as any;
       apps.push({
-        uid: doc.id,
-        ...doc.data(),
+        uid: d.id,
+        ownerName: data.ownerName ?? data.owner ?? '',
+        shopName: data.shopName ?? data.storeName ?? '',
+        email: data.email ?? '',
+        phone: data.phone ?? '',
+        address: data.address ?? '',
+        category: data.category ?? '',
+        status: (data.status || 'pending').toString().toLowerCase() as 'pending' | 'approved' | 'rejected',
+        createdAt: data.createdAt ?? data.created_at ?? null,
+        approvedAt: data.approvedAt ?? null,
+        approvedBy: data.approvedBy ?? null,
+        rejectedAt: data.rejectedAt ?? null,
+        rejectedBy: data.rejectedBy ?? null,
+        rejectionReason: data.rejectionReason ?? null,
       } as SellerApplication);
     });
 
-    // Sort by createdAt descending
-    apps.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      return dateB - dateA;
-    });
+    // Sort by createdAt descending (handle Firestore Timestamp safely)
+    const toMillis = (v: any) => {
+      if (!v) return 0;
+      if (typeof v.toDate === 'function') return v.toDate().getTime();
+      if (typeof v.seconds === 'number') return v.seconds * 1000;
+      const parsed = Date.parse(String(v));
+      return isNaN(parsed) ? 0 : parsed;
+    };
+
+    apps.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
 
     return apps;
   } catch (error) {
