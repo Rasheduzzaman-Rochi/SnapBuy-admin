@@ -2,10 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Eye, EyeOff, Shield, Store } from 'lucide-react';
-import { validateLogin } from '@/lib/auth';
-import { setMockRole } from '@/lib/mockAuth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,46 +12,53 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    console.log('Login page loaded');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Validate credentials
-    const result = validateLogin(email, password);
-    
-    if (result.success && result.user) {
-      // Determine role from email
-      const role = email.includes('admin') ? 'admin' : 'seller';
-      setMockRole(role);
-      
-      // Store user data in localStorage
-      localStorage.setItem('user', JSON.stringify(result.user));
-      
-      // Redirect to dashboard
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 500);
-    } else {
-      setError(result.error || 'Login failed');
+    try {
+      // Dynamically import to defer Firebase loading
+      const { loginWithEmail } = await import('@/services/authService');
+      const result = await loginWithEmail(email, password);
+
+      if (result.success) {
+        // Route based on role
+        const role = result.user?.role;
+        console.log('Resolved role:', role);
+        console.log('🔐 Login successful! User role:', role);
+        console.log('📍 Redirecting to appropriate page...');
+        
+        if (role === 'admin' || role === 'approved') {
+          console.log('✅ Admin/Seller detected → Redirecting to /dashboard');
+          router.push('/dashboard');
+        } else if (role === 'pending') {
+          console.log('⏳ Pending seller → Redirecting to /pending-approval');
+          router.push('/pending-approval');
+        } else if (role === 'rejected') {
+          console.log('❌ Rejected seller → Showing error');
+          setError('Your seller application has been rejected. Please contact support.');
+          setLoading(false);
+        } else {
+          console.log('⚠️ No role found → Redirecting to /register-seller');
+          // No role yet, redirect to seller registration
+          router.push('/register-seller');
+        }
+      } else {
+        setError(result.error || 'Login failed');
+        setLoading(false);
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
       setLoading(false);
     }
-  };
-
-  const handleQuickLogin = (role: 'admin' | 'seller') => {
-    setLoading(true);
-    setMockRole(role);
-    
-    const mockUser = role === 'admin' 
-      ? { uid: 'admin_001', name: 'Rashed Admin', email: 'admin@snapbuy.com', role: 'admin' }
-      : { uid: 'seller_001', name: 'SnapBuy Seller', email: 'seller@snapbuy.com', role: 'seller' };
-    
-    localStorage.setItem('user', JSON.stringify(mockUser));
-    
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 300);
   };
 
   return (
@@ -72,22 +77,14 @@ export default function LoginPage() {
 
           {/* Quick Login Buttons */}
           <div className="space-y-3 mb-6">
+            <p className="text-center text-sm text-slate-600 mb-2">Use Firebase credentials to login</p>
             <button
-              onClick={() => handleQuickLogin('admin')}
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 bg-gradient-to-r from-slate-400 to-slate-500 text-white font-semibold rounded-lg opacity-50 cursor-not-allowed flex items-center justify-center gap-2"
+              title="Demo logins are now disabled. Use real Firebase credentials."
             >
               <Shield size={20} />
-              Continue as Admin
-            </button>
-            
-            <button
-              onClick={() => handleQuickLogin('seller')}
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-semibold rounded-lg hover:from-emerald-700 hover:to-emerald-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              <Store size={20} />
-              Continue as Seller
+              Demo Login (Disabled)
             </button>
           </div>
 
@@ -153,10 +150,11 @@ export default function LoginPage() {
 
             {/* Info Note */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
-              <strong>Demo Credentials:</strong>
+              <strong>Using Firebase Auth:</strong>
               <div className="mt-2 space-y-1">
-                <div><strong>Admin:</strong> admin@snapbuy.com / admin123</div>
-                <div><strong>Seller:</strong> seller@snapbuy.com / seller123</div>
+                <div>Enter email and password registered in your Firebase project</div>
+                <div>Admin users will have an 'admins' document in Firestore</div>
+                <div>Sellers must have approved 'sellerApplications' document</div>
               </div>
             </div>
 

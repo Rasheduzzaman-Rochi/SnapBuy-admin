@@ -6,6 +6,7 @@ interface StatusBadgeProps {
   text: string;
   variant?: BadgeVariant;
   size?: 'sm' | 'md';
+  className?: string;
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
@@ -21,13 +22,14 @@ const sizeStyles = {
   md: 'px-3 py-1.5 text-sm',
 };
 
-export function StatusBadge({ text, variant = 'default', size = 'md' }: StatusBadgeProps) {
+export function StatusBadge({ text, variant = 'default', size = 'md', className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
         'inline-flex items-center rounded-full border font-medium transition-colors',
         variantStyles[variant],
-        sizeStyles[size]
+        sizeStyles[size],
+        className
       )}
     >
       {text}

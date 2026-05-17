@@ -18,12 +18,14 @@ export default function Home() {
           <div className="flex gap-3">
             <Link
               href="/login"
+              onClick={() => console.log('Admin Login button clicked')}
               className="px-6 py-2 text-slate-700 font-semibold hover:text-blue-600 transition-colors"
             >
               Login
             </Link>
             <Link
               href="/register-seller"
+              onClick={() => console.log('Become a Seller button clicked')}
               className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 active:scale-95"
             >
               Become a Seller
@@ -55,6 +57,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Link
                 href="/login"
+                onClick={() => console.log('Admin Login button clicked')}
                 className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 active:scale-95"
               >
                 Admin Login
@@ -62,6 +65,7 @@ export default function Home() {
               </Link>
               <Link
                 href="/register-seller"
+                onClick={() => console.log('Apply as Seller button clicked')}
                 className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-xl border-2 border-blue-200 hover:border-blue-600 hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
               >
                 Apply as Seller

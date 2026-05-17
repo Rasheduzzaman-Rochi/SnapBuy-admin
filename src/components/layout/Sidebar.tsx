@@ -19,7 +19,7 @@ import { getCurrentMockRole, UserRole } from '@/lib/mockAuth';
 interface MenuItem {
   label: string;
   href: string;
-  icon: React.ComponentType<{ size: number }>;
+  icon: React.ReactNode | any;
 }
 
 const adminMenuItems: MenuItem[] = [

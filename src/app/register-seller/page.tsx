@@ -17,6 +17,8 @@ export default function RegisterSellerPage() {
     address: '',
     category: '',
   });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
@@ -25,10 +27,33 @@ export default function RegisterSellerPage() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Application submitted! Redirecting to pending approval page...');
-    router.push('/pending-approval');
+    setError('');
+    setLoading(true);
+
+    try {
+      // Dynamically import to defer Firebase loading
+      const { registerSeller } = await import('@/services/authService');
+      const result = await registerSeller(formData.email, formData.password, {
+        ownerName: formData.ownerName,
+        shopName: formData.shopName,
+        phone: formData.phone,
+        address: formData.address,
+        category: formData.category,
+      });
+
+      if (result.success) {
+        // Redirect to pending approval page
+        router.push('/pending-approval');
+      } else {
+        setError(result.error || 'Registration failed');
+        setLoading(false);
+      }
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+      setLoading(false);
+    }
   };
 
   const categories = ['Electronics', 'Fashion', 'Home & Garden', 'Beauty', 'Books', 'Sports', 'Other'];
@@ -52,6 +77,13 @@ export default function RegisterSellerPage() {
         {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 md:p-12">
           <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+                {error}
+              </div>
+            )}
+
             {/* Owner Information */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
@@ -198,9 +230,10 @@ export default function RegisterSellerPage() {
             <div className="flex gap-3 pt-6">
               <button
                 type="submit"
-                className="flex-1 py-3 px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 active:scale-95"
+                disabled={loading}
+                className="flex-1 py-3 px-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit Application
+                {loading ? 'Submitting...' : 'Submit Application'}
               </button>
               <Link
                 href="/"

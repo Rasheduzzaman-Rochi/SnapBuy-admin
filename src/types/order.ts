@@ -6,6 +6,7 @@ export interface OrderItem {
   total: number;
   sellerId?: string;
   sellerName?: string;
+  imageUrl?: string;
 }
 
 export interface Order {
@@ -20,5 +21,7 @@ export interface Order {
   paymentStatus: 'pending' | 'paid_test' | 'paid' | 'failed';
   paymentGateway: string;
   sellerId?: string;
+  sellerIds?: string[];
   createdAt: string;
+  updatedAt?: string;
 }
