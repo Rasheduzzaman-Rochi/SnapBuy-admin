@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Eye, EyeOff, Shield, Store } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Logo } from '@/components/common/Logo';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -62,47 +64,25 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100 px-4 text-slate-900 dark:from-slate-950 dark:via-slate-950 dark:to-slate-900 dark:text-slate-100">
+      <div className="mx-auto flex min-h-screen w-full max-w-md items-center justify-center py-8">
+        <div className="absolute right-4 top-4 md:right-8 md:top-8">
+          <ThemeToggle />
+        </div>
         {/* Card */}
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-8">
+        <div className="w-full rounded-xl border border-slate-200 bg-white p-8 shadow-lg dark:border-slate-800 dark:bg-slate-900">
           {/* Logo */}
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-2xl mx-auto mb-4">
-              SB
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900">SnapBuy</h1>
-            <p className="text-slate-600 text-sm mt-2">Admin & Seller Dashboard</p>
-          </div>
-
-          {/* Quick Login Buttons */}
-          <div className="space-y-3 mb-6">
-            <p className="text-center text-sm text-slate-600 mb-2">Use Firebase credentials to login</p>
-            <button
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-slate-400 to-slate-500 text-white font-semibold rounded-lg opacity-50 cursor-not-allowed flex items-center justify-center gap-2"
-              title="Demo logins are now disabled. Use real Firebase credentials."
-            >
-              <Shield size={20} />
-              Demo Login (Disabled)
-            </button>
-          </div>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-slate-500">Manual Login</span>
-            </div>
+          <div className="mb-8 flex flex-col items-center justify-center text-center">
+            <Logo showText={false} size="lg" className="justify-center" />
+            <h1 className="mt-4 text-3xl font-bold text-slate-900 dark:text-white">SnapBuy</h1>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Admin & Seller Dashboard</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-900 mb-2">
+              <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-900 dark:text-slate-100">
                 Email
               </label>
               <input
@@ -112,13 +92,13 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="your@email.com"
-                className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full rounded-lg border border-slate-300 px-4 py-2.5 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
               />
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-900 mb-2">
+              <label htmlFor="password" className="mb-2 block text-sm font-medium text-slate-900 dark:text-slate-100">
                 Password
               </label>
               <div className="relative">
@@ -129,12 +109,12 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Enter your password"
-                  className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                  className="w-full rounded-lg border border-slate-300 px-4 py-2.5 pr-10 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -143,55 +123,36 @@ export default function LoginPage() {
 
             {/* Error Message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
                 {error}
               </div>
             )}
 
             {/* Info Note */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
-              <strong>Using Firebase Auth:</strong>
-              <div className="mt-2 space-y-1">
-                <div>Enter email and password registered in your Firebase project</div>
-                <div>Admin users will have an 'admins' document in Firestore</div>
-                <div>Sellers must have approved 'sellerApplications' document</div>
-              </div>
-            </div>
-
             {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 py-2.5 font-semibold text-white transition-all hover:from-blue-700 hover:to-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-slate-500">New to SnapBuy?</span>
-            </div>
+          <div className="mt-6 flex flex-col items-center gap-3 text-sm sm:flex-row sm:justify-between">
+            <Link
+              href="/register-seller"
+              className="font-semibold text-emerald-600 transition-colors hover:text-emerald-700 dark:text-emerald-300 dark:hover:text-emerald-200"
+            >
+              Apply as Seller
+            </Link>
+            <Link
+              href="/"
+              className="font-medium text-slate-600 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+            >
+              Back to Home
+            </Link>
           </div>
-
-          {/* Seller Registration Link */}
-          <Link
-            href="/register-seller"
-            className="w-full py-2.5 border-2 border-emerald-600 text-emerald-600 font-semibold rounded-lg hover:bg-emerald-50 transition-colors text-center block"
-          >
-            Apply as Seller
-          </Link>
-
-          {/* Footer */}
-          <p className="text-center text-sm text-slate-600 mt-6">
-            <a href="#" className="text-blue-600 hover:underline">
-              Forgot password?
-            </a>
-          </p>
         </div>
       </div>
     </main>

@@ -9,6 +9,11 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'SnapBuy Admin Dashboard',
   description: 'Admin panel for SnapBuy e-commerce platform',
+  icons: {
+    icon: '/snapbuy-logo.png',
+    shortcut: '/snapbuy-logo.png',
+    apple: '/snapbuy-logo.png',
+  },
 };
 
 export default function RootLayout({

@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
 import { logout } from '@/services/authService';
+import { Logo } from '@/components/common/Logo';
 
 interface MenuItem {
   label: string;
@@ -54,20 +55,13 @@ export function Sidebar() {
   };
 
   const roleLabel = isAdmin ? 'Admin Panel' : 'Seller Panel';
-  const roleColor = isAdmin ? 'from-blue-400 to-blue-600' : 'from-emerald-400 to-emerald-600';
 
   return (
     <aside className="hidden md:fixed md:left-0 md:top-0 md:z-40 md:flex md:h-screen md:w-64 md:flex-col md:border-r md:border-slate-200 md:bg-white md:text-slate-900 md:shadow-sm dark:md:border-slate-800 dark:md:bg-slate-950 dark:md:text-slate-100">
       {/* Logo Section */}
       <div className="px-6 py-8 border-b border-slate-200 dark:border-slate-800">
         <Link href="/" className="flex items-center gap-3">
-          <div className={`w-10 h-10 bg-gradient-to-br ${roleColor} rounded-xl flex items-center justify-center text-white font-bold text-lg`}>
-            SB
-          </div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-900 dark:text-white">SnapBuy</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{loading ? 'Loading...' : roleLabel}</p>
-          </div>
+          <Logo size="md" subtitle={loading ? 'Loading...' : roleLabel} />
         </Link>
       </div>
 

@@ -105,7 +105,7 @@ export default function DashboardPage() {
 
           {/* Recent Orders Table */}
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-slate-900">Recent Orders</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Recent Orders</h2>
             <RecentOrdersTable />
           </div>
         </div>
@@ -177,7 +177,7 @@ export default function DashboardPage() {
 
         {/* Recent Orders Table */}
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-slate-900">My Recent Orders</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">My Recent Orders</h2>
           <RecentOrdersTable orders={sellerOrders.slice(0, 5)} />
         </div>
 
@@ -185,30 +185,30 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <a
             href="/products/add"
-            className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-6 hover:shadow-lg transition-shadow"
+            className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 p-6 transition-shadow hover:shadow-lg dark:border-slate-800 dark:from-slate-900 dark:to-slate-800"
           >
             <div className="flex items-center gap-4">
-              <div className="bg-blue-600 rounded-xl p-3">
+              <div className="rounded-xl bg-blue-600 p-3">
                 <Package className="text-white" size={24} />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">Add New Product</h3>
-                <p className="text-sm text-slate-600">Create a new product listing</p>
+                <h3 className="font-semibold text-slate-900 dark:text-white">Add New Product</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Create a new product listing</p>
               </div>
             </div>
           </a>
 
           <a
             href="/orders"
-            className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-2 border-emerald-200 rounded-2xl p-6 hover:shadow-lg transition-shadow"
+            className="rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 transition-shadow hover:shadow-lg dark:border-slate-800 dark:from-slate-900 dark:to-slate-800"
           >
             <div className="flex items-center gap-4">
-              <div className="bg-emerald-600 rounded-xl p-3">
+              <div className="rounded-xl bg-emerald-600 p-3">
                 <ShoppingCart className="text-white" size={24} />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">View All Orders</h3>
-                <p className="text-sm text-slate-600">Manage your orders</p>
+                <h3 className="font-semibold text-slate-900 dark:text-white">View All Orders</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Manage your orders</p>
               </div>
             </div>
           </a>
