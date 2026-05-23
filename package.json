@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "tsc --noEmit",
     "migrate:products": "node scripts/migrate_products.js",
     "migrate:orders": "node scripts/migrate_orders.js",
     "migrate:all": "node scripts/migrate_products.js && node scripts/migrate_orders.js",

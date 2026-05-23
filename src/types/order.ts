@@ -1,3 +1,5 @@
+import type { DateValue } from './common';
+
 export interface OrderItem {
   productId: string;
   productName: string;
@@ -22,6 +24,6 @@ export interface Order {
   paymentGateway: string;
   sellerId?: string;
   sellerIds?: string[];
-  createdAt: string;
-  updatedAt?: string;
+  createdAt: DateValue;
+  updatedAt?: DateValue;
 }

@@ -13,7 +13,8 @@ import {
   Package, 
   ShoppingCart,
   CreditCard,
-  AlertCircle
+  AlertCircle,
+  Moon
 } from 'lucide-react';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { StatusBadge } from '@/components/ui/StatusBadge';
@@ -21,9 +22,11 @@ import { InfoRow } from '@/components/ui/InfoRow';
 import { RoleBadge } from '@/components/ui/RoleBadge';
 import { mockSellerUser } from '@/lib/mockAuth';
 import { logout } from '@/services/authService';
+import { useTheme } from '@/components/providers/ThemeProvider';
 
 export function SellerSettings() {
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -153,6 +156,26 @@ export function SellerSettings() {
               <p className="text-xs text-slate-600">Can update order statuses for your orders</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Platform Preferences Card */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 dark:border-slate-800 dark:bg-slate-900">
+        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2 dark:text-slate-100">
+          <Moon size={20} />
+          Platform Preferences
+        </h3>
+
+        <div>
+          <label className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors dark:hover:bg-slate-800">
+            <span className="font-medium text-slate-900 dark:text-slate-100">Dark Mode</span>
+            <input
+              type="checkbox"
+              checked={resolvedTheme === 'dark'}
+              onChange={(event) => setTheme(event.target.checked ? 'dark' : 'light')}
+              className="w-4 h-4"
+            />
+          </label>
         </div>
       </div>
 

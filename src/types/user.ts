@@ -1,3 +1,5 @@
+import type { DateValue } from './common';
+
 export interface User {
   uid: string;
   name: string;
@@ -5,5 +7,5 @@ export interface User {
   phone: string;
   provider: string;
   status: 'active' | 'inactive' | 'suspended';
-  createdAt: string;
+  createdAt: DateValue;
 }

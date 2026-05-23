@@ -6,13 +6,22 @@ import { Order } from '@/types/order';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { DataTableWrapper } from '@/components/ui/DataTableWrapper';
-import { mockOrders } from '@/data/mockData';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface RecentOrdersTableProps {
-  orders?: Order[];
+  orders: Order[];
 }
 
-export function RecentOrdersTable({ orders = mockOrders.slice(0, 5) }: RecentOrdersTableProps) {
+export function RecentOrdersTable({ orders }: RecentOrdersTableProps) {
+  if (orders.length === 0) {
+    return (
+      <EmptyState
+        title="No recent orders"
+        description="Orders from Firestore will appear here when customers place them."
+      />
+    );
+  }
+
   const getPaymentBadgeVariant = (status: string): 'success' | 'warning' | 'danger' | 'info' => {
     switch (status) {
       case 'paid':

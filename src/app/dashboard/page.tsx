@@ -6,13 +6,72 @@ import { StatCard } from '@/components/dashboard/StatCard';
 import { RecentOrdersTable } from '@/components/dashboard/RecentOrdersTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { mockOrders, mockProducts, mockUsers, mockSellerApplications } from '@/data/mockData';
 import { useAuth } from '@/hooks/useAuth';
+import { useEffect, useState } from 'react';
+import { getProducts } from '@/services/productService';
+import { getOrders } from '@/services/orderService';
+import { getAllUsers } from '@/services/userService';
+import { getSellerApplications } from '@/services/sellerService';
+import { Product } from '@/types/product';
+import { Order } from '@/types/order';
+import { User } from '@/types/user';
+import { SellerApplication } from '@/types/seller';
 
 export default function DashboardPage() {
   const { user, role, loading } = useAuth();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [sellerApplications, setSellerApplications] = useState<SellerApplication[]>([]);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (loading) {
+  useEffect(() => {
+    if (loading || !role) return;
+
+    let mounted = true;
+
+    async function loadDashboardData() {
+      try {
+        setDataLoading(true);
+        setError(null);
+
+        const [loadedProducts, loadedOrders] = await Promise.all([
+          getProducts(role, user?.uid),
+          getOrders(role, user?.uid),
+        ]);
+
+        if (!mounted) return;
+
+        setProducts(loadedProducts);
+        setOrders(loadedOrders);
+
+        if (role === 'admin') {
+          const [loadedUsers, loadedApplications] = await Promise.all([
+            getAllUsers(),
+            getSellerApplications(),
+          ]);
+
+          if (!mounted) return;
+
+          setUsers(loadedUsers);
+          setSellerApplications(loadedApplications);
+        }
+      } catch (err: any) {
+        if (mounted) setError(err?.message || 'Failed to load dashboard data.');
+      } finally {
+        if (mounted) setDataLoading(false);
+      }
+    }
+
+    loadDashboardData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [loading, role, user?.uid]);
+
+  if (loading || dataLoading) {
     return (
       <DashboardLayout>
         <div className="flex min-h-[50vh] items-center justify-center text-slate-600 dark:text-slate-300">
@@ -25,19 +84,19 @@ export default function DashboardPage() {
   // Filter data based on role
   const currentSellerId = role === 'approved' ? user?.uid ?? null : null;
   const sellerProducts = currentSellerId
-    ? mockProducts.filter((p) => p.sellerId === currentSellerId)
-    : mockProducts;
+    ? products.filter((p) => p.sellerId === currentSellerId)
+    : products;
   const sellerOrders = currentSellerId
-    ? mockOrders.filter((o) => o.sellerId === currentSellerId)
-    : mockOrders;
+    ? orders.filter((o) => o.sellerIds?.includes(currentSellerId) || o.sellerId === currentSellerId)
+    : orders;
 
   // Admin stats
-  const totalSellers = mockSellerApplications.length;
-  const pendingApplications = mockSellerApplications.filter(s => s.status === 'pending').length;
-  const totalProducts = mockProducts.length;
-  const totalOrders = mockOrders.length;
-  const totalSales = mockOrders.reduce((sum, order) => sum + order.total, 0);
-  const totalUsers = mockUsers.length;
+  const totalSellers = sellerApplications.length;
+  const pendingApplications = sellerApplications.filter(s => s.status === 'pending').length;
+  const totalProducts = products.length;
+  const totalOrders = orders.length;
+  const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
+  const totalUsers = users.length;
 
   // Seller stats
   const myProductCount = sellerProducts.length;
@@ -56,6 +115,12 @@ export default function DashboardPage() {
             title="Dashboard"
             description="Welcome back! Here's your platform overview."
           />
+
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
+              {error}
+            </div>
+          )}
 
           {/* Admin Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -106,7 +171,7 @@ export default function DashboardPage() {
           {/* Recent Orders Table */}
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Recent Orders</h2>
-            <RecentOrdersTable />
+            <RecentOrdersTable orders={orders.slice(0, 5)} />
           </div>
         </div>
       </DashboardLayout>
@@ -122,6 +187,12 @@ export default function DashboardPage() {
           title="My Dashboard"
           description="Welcome to your seller dashboard. Here's your business overview."
         />
+
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
+            {error}
+          </div>
+        )}
 
         {/* Seller Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

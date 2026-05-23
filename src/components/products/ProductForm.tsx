@@ -6,17 +6,20 @@ import { useRouter } from 'next/navigation';
 import { Product } from '@/types/product';
 import { FormSection } from '@/components/ui/FormSection';
 import { ActionButton } from '@/components/ui/ActionButton';
+import { addProduct } from '@/services/productService';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProductFormProps {
   initialData?: Product;
   isEditing?: boolean;
-  onSubmit?: (data: Partial<Product>) => void;
+  onSubmit?: (data: Partial<Product>) => Promise<void> | void;
 }
 
 const categories = ['Electronics', 'Bags', 'Shoes', 'Accessories', 'Clothing', 'Books', 'Other'];
 
 export function ProductForm({ initialData, isEditing = false, onSubmit }: ProductFormProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<Partial<Product>>(
     initialData || {
       name: '',
@@ -28,19 +31,56 @@ export function ProductForm({ initialData, isEditing = false, onSubmit }: Produc
       isFeatured: false,
     }
   );
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit?.(formData);
-    alert(isEditing ? 'Product updated successfully!' : 'Product created successfully!');
-    router.push('/products');
+
+    try {
+      setSubmitting(true);
+      setError(null);
+
+      const productData = {
+        ...formData,
+        price: Number(formData.price ?? 0),
+        stock: Number(formData.stock ?? 0),
+      };
+
+      if (onSubmit) {
+        await onSubmit(productData);
+      } else {
+        const result = await addProduct({
+          name: productData.name ?? '',
+          description: productData.description ?? '',
+          category: productData.category ?? '',
+          price: productData.price ?? 0,
+          stock: productData.stock ?? 0,
+          imageUrl: productData.imageUrl ?? '',
+          sellerId: user?.uid ?? '',
+          sellerName: user?.displayName ?? user?.email ?? '',
+          isActive: productData.isActive ?? true,
+          isFeatured: productData.isFeatured ?? false,
+        });
+
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to create product.');
+        }
+      }
+
+      router.push('/products');
+    } catch (err: any) {
+      setError(err?.message || `Failed to ${isEditing ? 'update' : 'create'} product.`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : type === 'number' ? Number(value) : value,
     });
   };
 
@@ -50,6 +90,12 @@ export function ProductForm({ initialData, isEditing = false, onSubmit }: Produc
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl">
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
+          {error}
+        </div>
+      )}
+
       {/* Image Upload Section */}
       <FormSection
         title="Product Image"
@@ -208,6 +254,7 @@ export function ProductForm({ initialData, isEditing = false, onSubmit }: Produc
           size="md"
           icon={<Save size={18} />}
           className="flex-1"
+          isLoading={submitting}
         >
           {isEditing ? 'Update Product' : 'Save Product'}
         </ActionButton>

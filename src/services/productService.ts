@@ -21,6 +21,25 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { Product } from '@/types/product';
 import { UserRole } from './authService';
+import { toMillis } from '@/lib/utils';
+
+function mapProduct(docId: string, data: any): Product {
+  return {
+    id: docId,
+    name: data.name ?? '',
+    description: data.description ?? '',
+    category: data.category ?? 'Other',
+    price: Number(data.price ?? 0),
+    imageUrl: data.imageUrl ?? '',
+    stock: Number(data.stock ?? 0),
+    sellerId: data.sellerId ?? '',
+    sellerName: data.sellerName ?? '',
+    isActive: data.isActive ?? true,
+    isFeatured: data.isFeatured ?? false,
+    createdAt: data.createdAt ?? null,
+    updatedAt: data.updatedAt ?? null,
+  };
+}
 
 /**
  * Get products based on role and user ID
@@ -29,6 +48,10 @@ import { UserRole } from './authService';
  */
 export async function getProducts(role: UserRole, uid?: string): Promise<Product[]> {
   try {
+    if (role !== 'admin' && !uid) {
+      return [];
+    }
+
     const productsRef = collection(db, 'products');
     let q;
 
@@ -43,16 +66,15 @@ export async function getProducts(role: UserRole, uid?: string): Promise<Product
     const products: Product[] = [];
 
     querySnapshot.forEach((doc) => {
-      products.push({
-        id: doc.id,
-        ...(doc.data() as Omit<Product, 'id'>),
-      } as Product);
+      products.push(mapProduct(doc.id, doc.data()));
     });
+
+    products.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
 
     return products;
   } catch (error) {
     console.error('Error fetching products:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -60,21 +82,23 @@ export async function getProducts(role: UserRole, uid?: string): Promise<Product
  * Get single product by ID
  */
 export async function getProductById(productId: string): Promise<Product | null> {
+  if (!productId || typeof productId !== 'string') {
+    console.error('Invalid productId passed to getProductById:', productId);
+    return null;
+  }
+
   try {
     const docRef = doc(db, 'products', productId);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      return {
-        id: docSnap.id,
-        ...(docSnap.data() as Omit<Product, 'id'>),
-      } as Product;
+      return mapProduct(docSnap.id, docSnap.data());
     }
 
     return null;
   } catch (error) {
     console.error('Error fetching product:', error);
-    return null;
+    throw error;
   }
 }
 

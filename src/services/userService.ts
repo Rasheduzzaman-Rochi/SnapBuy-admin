@@ -10,11 +10,22 @@ import {
   getDocs,
   getDoc,
   doc,
-  query,
-  where,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { User } from '@/types/user';
+import { toMillis } from '@/lib/utils';
+
+function mapUser(docId: string, data: any): User {
+  return {
+    uid: docId,
+    name: data.name ?? data.displayName ?? data.email ?? 'Unnamed User',
+    email: data.email ?? '',
+    phone: data.phone ?? '',
+    provider: data.provider ?? data.providerId ?? 'email',
+    status: data.status ?? 'active',
+    createdAt: data.createdAt ?? null,
+  };
+}
 
 /**
  * Get all users
@@ -26,23 +37,16 @@ export async function getAllUsers(): Promise<User[]> {
     const users: User[] = [];
 
     querySnapshot.forEach((doc) => {
-      users.push({
-        uid: doc.id,
-        ...(doc.data() as Omit<User, 'uid'>),
-      } as User);
+      users.push(mapUser(doc.id, doc.data()));
     });
 
     // Sort by createdAt descending
-    users.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      return dateB - dateA;
-    });
+    users.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
 
     return users;
   } catch (error) {
     console.error('Error fetching users:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -55,16 +59,13 @@ export async function getUserById(uid: string): Promise<User | null> {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      return {
-        uid: docSnap.id,
-        ...(docSnap.data() as Omit<User, 'uid'>),
-      } as User;
+      return mapUser(docSnap.id, docSnap.data());
     }
 
     return null;
   } catch (error) {
     console.error('Error fetching user:', error);
-    return null;
+    throw error;
   }
 }
 

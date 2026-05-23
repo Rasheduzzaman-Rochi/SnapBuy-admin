@@ -17,6 +17,26 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { SellerApplication } from '@/types/seller';
+import { toMillis } from '@/lib/utils';
+
+function mapSellerApplication(docId: string, data: any): SellerApplication {
+  return {
+    uid: docId,
+    ownerName: data.ownerName ?? data.owner ?? '',
+    shopName: data.shopName ?? data.storeName ?? '',
+    email: data.email ?? '',
+    phone: data.phone ?? '',
+    address: data.address ?? '',
+    category: data.category ?? '',
+    status: (data.status || 'pending').toString().toLowerCase() as 'pending' | 'approved' | 'rejected',
+    createdAt: data.createdAt ?? data.created_at ?? null,
+    approvedAt: data.approvedAt ?? null,
+    approvedBy: data.approvedBy ?? null,
+    rejectedAt: data.rejectedAt ?? null,
+    rejectedBy: data.rejectedBy ?? null,
+    rejectionReason: data.rejectionReason ?? null,
+  };
+}
 
 /**
  * Get all seller applications
@@ -27,41 +47,17 @@ export async function getSellerApplications(): Promise<SellerApplication[]> {
     const querySnapshot = await getDocs(appsRef);
     const apps: SellerApplication[] = [];
 
-    querySnapshot.forEach((d) => {
-      const data = d.data() as any;
-      apps.push({
-        uid: d.id,
-        ownerName: data.ownerName ?? data.owner ?? '',
-        shopName: data.shopName ?? data.storeName ?? '',
-        email: data.email ?? '',
-        phone: data.phone ?? '',
-        address: data.address ?? '',
-        category: data.category ?? '',
-        status: (data.status || 'pending').toString().toLowerCase() as 'pending' | 'approved' | 'rejected',
-        createdAt: data.createdAt ?? data.created_at ?? null,
-        approvedAt: data.approvedAt ?? null,
-        approvedBy: data.approvedBy ?? null,
-        rejectedAt: data.rejectedAt ?? null,
-        rejectedBy: data.rejectedBy ?? null,
-        rejectionReason: data.rejectionReason ?? null,
-      } as SellerApplication);
+    querySnapshot.forEach((doc) => {
+      apps.push(mapSellerApplication(doc.id, doc.data()));
     });
 
     // Sort by createdAt descending (handle Firestore Timestamp safely)
-    const toMillis = (v: any) => {
-      if (!v) return 0;
-      if (typeof v.toDate === 'function') return v.toDate().getTime();
-      if (typeof v.seconds === 'number') return v.seconds * 1000;
-      const parsed = Date.parse(String(v));
-      return isNaN(parsed) ? 0 : parsed;
-    };
-
     apps.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
 
     return apps;
   } catch (error) {
     console.error('Error fetching seller applications:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -74,16 +70,13 @@ export async function getSellerApplication(uid: string): Promise<SellerApplicati
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      return {
-        uid: docSnap.id,
-        ...(docSnap.data() as Omit<SellerApplication, 'uid'>),
-      } as SellerApplication;
+      return mapSellerApplication(docSnap.id, docSnap.data());
     }
 
     return null;
   } catch (error) {
     console.error('Error fetching seller application:', error);
-    return null;
+    throw error;
   }
 }
 
@@ -100,16 +93,13 @@ export async function getSellerApplicationsByStatus(
     const apps: SellerApplication[] = [];
 
     querySnapshot.forEach((doc) => {
-      apps.push({
-        uid: doc.id,
-        ...doc.data(),
-      } as SellerApplication);
+      apps.push(mapSellerApplication(doc.id, doc.data()));
     });
 
     return apps;
   } catch (error) {
     console.error('Error fetching seller applications by status:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -123,6 +113,9 @@ export async function approveSeller(uid: string, approvedBy: string) {
       status: 'approved',
       approvedAt: serverTimestamp(),
       approvedBy,
+      rejectedAt: null,
+      rejectedBy: null,
+      rejectionReason: null,
     });
 
     return { success: true };
@@ -146,6 +139,8 @@ export async function rejectSeller(uid: string, rejectedBy: string, reason?: str
       rejectedAt: serverTimestamp(),
       rejectedBy,
       rejectionReason: reason || null,
+      approvedAt: null,
+      approvedBy: null,
     });
 
     return { success: true };

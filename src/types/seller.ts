@@ -1,3 +1,5 @@
+import type { DateValue } from './common';
+
 export interface SellerApplication {
   uid: string;
   ownerName: string;
@@ -7,10 +9,10 @@ export interface SellerApplication {
   address: string;
   category: string;
   status: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
-  approvedAt?: string | null;
+  createdAt: DateValue;
+  approvedAt?: DateValue;
   approvedBy?: string | null;
-  rejectedAt?: string | null;
+  rejectedAt?: DateValue;
   rejectedBy?: string | null;
   rejectionReason?: string | null;
 }

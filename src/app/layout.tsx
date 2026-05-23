@@ -6,6 +6,19 @@ import { DashboardSearchProvider } from '@/components/providers/DashboardSearchP
 
 const inter = Inter({ subsets: ['latin'] });
 
+const themeScript = `
+(() => {
+  try {
+    const theme = localStorage.getItem('snapbuy_theme') || localStorage.getItem('snapbuy-theme') || 'system';
+    const resolvedTheme = theme === 'system'
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : theme;
+    document.documentElement.classList.toggle('dark', resolvedTheme === 'dark');
+    document.documentElement.style.colorScheme = resolvedTheme;
+  } catch (_) {}
+})();
+`;
+
 export const metadata: Metadata = {
   title: 'SnapBuy Admin Dashboard',
   description: 'Admin panel for SnapBuy e-commerce platform',
@@ -23,6 +36,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={inter.className}>
         <ThemeProvider>
           <DashboardSearchProvider>{children}</DashboardSearchProvider>

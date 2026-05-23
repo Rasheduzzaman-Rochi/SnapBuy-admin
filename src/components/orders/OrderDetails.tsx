@@ -11,13 +11,16 @@ import { MapPin, Phone, Mail, Package, TrendingUp } from 'lucide-react';
 
 interface OrderDetailsProps {
   order: Order;
+  onUpdateStatus?: (status: Order['orderStatus']) => Promise<void>;
 }
 
 const orderStatuses = ['placed', 'processing', 'shipped', 'delivered', 'cancelled'] as const;
 
-export function OrderDetails({ order: initialOrder }: OrderDetailsProps) {
+export function OrderDetails({ order: initialOrder, onUpdateStatus }: OrderDetailsProps) {
   const [order, setOrder] = useState(initialOrder);
   const [selectedStatus, setSelectedStatus] = useState(order.orderStatus);
+  const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const getStatusVariant = (status: string): 'success' | 'warning' | 'danger' | 'info' => {
     switch (status) {
@@ -50,9 +53,17 @@ export function OrderDetails({ order: initialOrder }: OrderDetailsProps) {
     }
   };
 
-  const handleUpdateStatus = () => {
-    setOrder({ ...order, orderStatus: selectedStatus as any });
-    alert('Order status updated successfully!');
+  const handleUpdateStatus = async () => {
+    try {
+      setUpdating(true);
+      setError(null);
+      await onUpdateStatus?.(selectedStatus as Order['orderStatus']);
+      setOrder({ ...order, orderStatus: selectedStatus as Order['orderStatus'] });
+    } catch (err: any) {
+      setError(err?.message || 'Failed to update order status.');
+    } finally {
+      setUpdating(false);
+    }
   };
 
   return (
@@ -217,9 +228,13 @@ export function OrderDetails({ order: initialOrder }: OrderDetailsProps) {
               icon={<TrendingUp size={18} />}
               onClick={handleUpdateStatus}
               className="w-full"
+              disabled={updating}
             >
-              Update Status
+              {updating ? 'Updating...' : 'Update Status'}
             </ActionButton>
+            {error && (
+              <p className="text-sm font-medium text-red-600 dark:text-red-300">{error}</p>
+            )}
           </div>
         </FormSection>
       </div>

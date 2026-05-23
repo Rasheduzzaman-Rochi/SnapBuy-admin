@@ -6,55 +6,30 @@ import { SellerApplicationsTable } from '@/components/sellers/SellerApplications
 import { PageHeader } from '@/components/ui/PageHeader';
 import { AccessDenied } from '@/components/ui/AccessDenied';
 import type { SellerApplication } from '@/types/seller';
-import { getCurrentUser } from '@/services/authService';
 import {
   getSellerApplications,
   approveSeller,
   rejectSeller,
 } from '@/services/sellerService';
 import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function SellersPage() {
-  const [user, setUser] = useState<any | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
   const [applications, setApplications] = useState<SellerApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { query } = useDashboardSearch();
+  const { user, role, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    let mounted = true;
-    setLoadingUser(true);
-    getCurrentUser()
-      .then((u) => {
-        if (!mounted) return;
-        console.log('Current admin/user:', u);
-        setUser(u);
-      })
-      .catch((e) => {
-        console.error('Error getting current user:', e);
-        setError(String(e));
-      })
-      .finally(() => mounted && setLoadingUser(false));
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    // Only admins should fetch applications
-    if (user.role !== 'admin') return;
+    if (authLoading || role !== 'admin') return;
 
     let mounted = true;
     const load = async () => {
       try {
         setLoading(true);
-        console.log('Fetching sellerApplications...');
+        setError(null);
         const apps = await getSellerApplications();
-        console.log('Seller applications count:', apps.length);
-        console.log('Seller applications data:', apps);
         if (!mounted) return;
         setApplications(apps);
       } catch (e: any) {
@@ -70,32 +45,36 @@ export default function SellersPage() {
     return () => {
       mounted = false;
     };
-  }, [user]);
+  }, [authLoading, role]);
 
   const handleApprove = async (uid: string) => {
     if (!user) return;
     try {
-      await approveSeller(uid, user.uid);
+      setError(null);
+      const result = await approveSeller(uid, user.uid);
+      if (!result.success) throw new Error(result.error);
       setApplications((prev) => prev.map((a) => (a.uid === uid ? { ...a, status: 'approved', approvedBy: user.uid, approvedAt: new Date().toISOString() } : a)));
-    } catch (e) {
+    } catch (e: any) {
       console.error('Approve failed:', e);
-      setError('Failed to approve application');
+      setError(e?.message || 'Failed to approve application');
     }
   };
 
   const handleReject = async (uid: string) => {
     if (!user) return;
     try {
-      await rejectSeller(uid, user.uid);
+      setError(null);
+      const result = await rejectSeller(uid, user.uid);
+      if (!result.success) throw new Error(result.error);
       setApplications((prev) => prev.map((a) => (a.uid === uid ? { ...a, status: 'rejected', rejectedBy: user.uid, rejectedAt: new Date().toISOString() } : a)));
-    } catch (e) {
+    } catch (e: any) {
       console.error('Reject failed:', e);
-      setError('Failed to reject application');
+      setError(e?.message || 'Failed to reject application');
     }
   };
 
   // Loading user
-  if (loadingUser) {
+  if (authLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
@@ -109,7 +88,7 @@ export default function SellersPage() {
   }
 
   // Not signed in or not admin
-  if (!user || user.role !== 'admin') {
+  if (!user || role !== 'admin') {
     return (
       <DashboardLayout>
         <AccessDenied />
@@ -131,12 +110,16 @@ export default function SellersPage() {
       <div className="mx-auto w-full max-w-7xl space-y-8">
         <PageHeader title="Seller Applications" description={`${pendingCount} pending review${pendingCount !== 1 ? 's' : ''}`} />
 
-        {loading && <p className="text-slate-600">Loading seller applications...</p>}
-        {error && <p className="text-red-600">Error: {error}</p>}
-        {!loading && applications.length === 0 && <p className="text-slate-600">No seller applications found.</p>}
+        {loading && <p className="text-slate-600 dark:text-slate-300">Loading seller applications...</p>}
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
+            {error}
+          </div>
+        )}
+        {!loading && applications.length === 0 && <p className="text-slate-600 dark:text-slate-300">No seller applications found.</p>}
 
         {!loading && applications.length > 0 && filteredApplications.length === 0 && (
-          <p className="text-slate-600">No seller applications match your search.</p>
+          <p className="text-slate-600 dark:text-slate-300">No seller applications match your search.</p>
         )}
 
         {!loading && filteredApplications.length > 0 && (

@@ -1,21 +1,112 @@
 'use client';
 
+import { use, useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProductForm } from '@/components/products/ProductForm';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { mockProducts } from '@/data/mockData';
+import { AccessDenied } from '@/components/ui/AccessDenied';
+import { getProductById, updateProduct } from '@/services/productService';
+import { useAuth } from '@/hooks/useAuth';
+import { Product } from '@/types/product';
 
-interface EditProductPageProps {
-  params: {
-    id: string;
-  };
-}
+type EditProductPageProps = {
+  params: Promise<{ id: string }>;
+};
 
 export default function EditProductPage({ params }: EditProductPageProps) {
-  const product = mockProducts.find((p) => p.id === params.id);
+  const { id } = use(params);
+  const { user, role, loading } = useAuth();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!product) {
+  useEffect(() => {
+    if (loading || !role) return;
+
+    if (role !== 'admin' && role !== 'approved') {
+      setAccessDenied(true);
+      return;
+    }
+
+    let mounted = true;
+
+    async function loadProduct() {
+      try {
+        setDataLoading(true);
+        setError(null);
+        setNotFound(false);
+        setAccessDenied(false);
+
+        const loadedProduct = await getProductById(id);
+
+        if (!mounted) return;
+
+        if (!loadedProduct) {
+          setNotFound(true);
+          setProduct(null);
+          return;
+        }
+
+        if (role !== 'admin' && loadedProduct.sellerId !== user?.uid) {
+          setAccessDenied(true);
+          setProduct(null);
+          return;
+        }
+
+        setProduct(loadedProduct);
+      } catch (err: any) {
+        if (mounted) setError(err?.message || 'Failed to load product.');
+      } finally {
+        if (mounted) setDataLoading(false);
+      }
+    }
+
+    loadProduct();
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, loading, role, user?.uid]);
+
+  const handleSubmit = async (data: Partial<Product>) => {
+    const result = await updateProduct(id, data);
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update product.');
+    }
+  };
+
+  if (loading || dataLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex min-h-[50vh] items-center justify-center text-slate-600 dark:text-slate-300">
+          Loading product...
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <DashboardLayout>
+        <AccessDenied />
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
+          {error}
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (notFound || !product) {
     return (
       <DashboardLayout>
         <EmptyState
@@ -37,7 +128,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         />
 
         {/* Form */}
-        <ProductForm initialData={product} isEditing />
+        <ProductForm initialData={product} isEditing onSubmit={handleSubmit} />
       </div>
     </DashboardLayout>
   );

@@ -1,3 +1,5 @@
+import type { DateValue } from './common';
+
 export interface Product {
   id: string;
   name: string;
@@ -10,6 +12,6 @@ export interface Product {
   sellerName: string;
   isActive: boolean;
   isFeatured: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: DateValue;
+  updatedAt: DateValue;
 }

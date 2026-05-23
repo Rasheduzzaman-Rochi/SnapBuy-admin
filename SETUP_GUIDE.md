@@ -191,10 +191,34 @@ service firebase.storage {
 
 ## Step 9: Test the Setup
 
-Restart your dev server:
+To run the web app while developing, start the dev server:
 
 ```bash
 npm run dev
+```
+
+This uses Webpack for development to avoid the Turbopack panic error:
+
+```text
+FATAL: An unexpected Turbopack error occurred
+```
+
+Then open:
+
+```text
+http://localhost:3000
+```
+
+To check that the project can build successfully for production, run:
+
+```bash
+npm run build
+```
+
+If the build finishes without errors, the web app is ready to run in production mode:
+
+```bash
+npm start
 ```
 
 ### Test Admin Login:

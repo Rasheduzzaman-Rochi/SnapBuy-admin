@@ -9,7 +9,7 @@ interface ThemeToggleProps {
 }
 
 export function ThemeToggle({ className }: ThemeToggleProps) {
-  const { theme, toggleTheme } = useTheme();
+  const { resolvedTheme, toggleTheme } = useTheme();
 
   return (
     <button
@@ -21,7 +21,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
         className
       )}
     >
-      {theme === 'dark' ? <SunMedium size={18} /> : <MoonStar size={18} />}
+      {resolvedTheme === 'dark' ? <SunMedium size={18} /> : <MoonStar size={18} />}
     </button>
   );
 }

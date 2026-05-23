@@ -20,9 +20,11 @@ import { InfoRow } from '@/components/ui/InfoRow';
 import { RoleBadge } from '@/components/ui/RoleBadge';
 import { mockAdminUser } from '@/lib/mockAuth';
 import { logout } from '@/services/authService';
+import { useTheme } from '@/components/providers/ThemeProvider';
 
 export function AdminSettings() {
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -117,33 +119,38 @@ export function AdminSettings() {
       </div>
 
       {/* Platform Preferences Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-8">
-        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+      <div className="bg-white rounded-2xl border border-slate-200 p-8 dark:border-slate-800 dark:bg-slate-900">
+        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2 dark:text-slate-100">
           <Moon size={20} />
           Platform Preferences
         </h3>
         
         <div className="space-y-4">
           <div>
-            <label className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors">
-              <span className="font-medium text-slate-900">Dark Mode</span>
-              <input type="checkbox" className="w-4 h-4" />
+            <label className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors dark:hover:bg-slate-800">
+              <span className="font-medium text-slate-900 dark:text-slate-100">Dark Mode</span>
+              <input
+                type="checkbox"
+                checked={resolvedTheme === 'dark'}
+                onChange={(event) => setTheme(event.target.checked ? 'dark' : 'light')}
+                className="w-4 h-4"
+              />
             </label>
           </div>
 
           <div>
-            <label className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors">
+            <label className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors dark:hover:bg-slate-800">
               <div className="flex items-center gap-2">
-                <Bell size={18} className="text-slate-600" />
-                <span className="font-medium text-slate-900">Email Notifications</span>
+                <Bell size={18} className="text-slate-600 dark:text-slate-300" />
+                <span className="font-medium text-slate-900 dark:text-slate-100">Email Notifications</span>
               </div>
               <input type="checkbox" defaultChecked className="w-4 h-4" />
             </label>
           </div>
 
           <div>
-            <label className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors">
-              <span className="font-medium text-slate-900">Product Updates</span>
+            <label className="flex items-center justify-between p-4 hover:bg-slate-50 rounded-lg cursor-pointer transition-colors dark:hover:bg-slate-800">
+              <span className="font-medium text-slate-900 dark:text-slate-100">Product Updates</span>
               <input type="checkbox" defaultChecked className="w-4 h-4" />
             </label>
           </div>

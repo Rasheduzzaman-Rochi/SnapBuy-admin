@@ -18,6 +18,37 @@ import {
 import { db } from '@/lib/firebase';
 import { Order } from '@/types/order';
 import { UserRole } from './authService';
+import { toMillis } from '@/lib/utils';
+
+function mapOrder(docId: string, data: any): Order {
+  const items = Array.isArray(data.items) ? data.items : [];
+
+  return {
+    id: docId,
+    customerName: data.customerName ?? data.customer?.name ?? '',
+    customerEmail: data.customerEmail ?? data.customer?.email ?? '',
+    customerPhone: data.customerPhone ?? data.customer?.phone ?? '',
+    customerAddress: data.customerAddress ?? data.customer?.address ?? data.shippingAddress ?? '',
+    items: items.map((item: any) => ({
+      productId: item.productId ?? '',
+      productName: item.productName ?? item.name ?? '',
+      quantity: Number(item.quantity ?? 0),
+      price: Number(item.price ?? 0),
+      total: Number(item.total ?? Number(item.price ?? 0) * Number(item.quantity ?? 0)),
+      sellerId: item.sellerId ?? undefined,
+      sellerName: item.sellerName ?? undefined,
+      imageUrl: item.imageUrl ?? undefined,
+    })),
+    total: Number(data.total ?? data.totalAmount ?? 0),
+    orderStatus: data.orderStatus ?? data.status ?? 'placed',
+    paymentStatus: data.paymentStatus ?? 'pending',
+    paymentGateway: data.paymentGateway ?? '',
+    sellerId: data.sellerId ?? undefined,
+    sellerIds: Array.isArray(data.sellerIds) ? data.sellerIds : data.sellerId ? [data.sellerId] : [],
+    createdAt: data.createdAt ?? null,
+    updatedAt: data.updatedAt ?? null,
+  };
+}
 
 /**
  * Get orders based on role and user ID
@@ -26,6 +57,10 @@ import { UserRole } from './authService';
  */
 export async function getOrders(role: UserRole, uid?: string): Promise<Order[]> {
   try {
+    if (role !== 'admin' && !uid) {
+      return [];
+    }
+
     const ordersRef = collection(db, 'orders');
     let q;
 
@@ -40,23 +75,16 @@ export async function getOrders(role: UserRole, uid?: string): Promise<Order[]> 
     const orders: Order[] = [];
 
     querySnapshot.forEach((doc) => {
-      orders.push({
-        id: doc.id,
-        ...(doc.data() as Omit<Order, 'id'>),
-      } as Order);
+      orders.push(mapOrder(doc.id, doc.data()));
     });
 
     // Sort by createdAt descending
-    orders.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      return dateB - dateA;
-    });
+    orders.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
 
     return orders;
   } catch (error) {
     console.error('Error fetching orders:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -69,16 +97,13 @@ export async function getOrderById(orderId: string): Promise<Order | null> {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      return {
-        id: docSnap.id,
-        ...docSnap.data(),
-      } as Order;
+      return mapOrder(docSnap.id, docSnap.data());
     }
 
     return null;
   } catch (error) {
     console.error('Error fetching order:', error);
-    return null;
+    throw error;
   }
 }
 
