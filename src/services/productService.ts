@@ -30,7 +30,7 @@ function mapProduct(docId: string, data: any): Product {
     description: data.description ?? '',
     category: data.category ?? 'Other',
     price: Number(data.price ?? 0),
-    imageUrl: data.imageUrl ?? '',
+    imageUrl: data.imageUrl || data.imageURL || data.image || data.photoUrl || '',
     stock: Number(data.stock ?? 0),
     sellerId: data.sellerId ?? '',
     sellerName: data.sellerName ?? '',

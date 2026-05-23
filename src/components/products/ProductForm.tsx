@@ -8,6 +8,7 @@ import { FormSection } from '@/components/ui/FormSection';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { addProduct } from '@/services/productService';
 import { useAuth } from '@/hooks/useAuth';
+import { ProductImage } from '@/components/products/ProductImage';
 
 interface ProductFormProps {
   initialData?: Product;
@@ -110,10 +111,10 @@ export function ProductForm({ initialData, isEditing = false, onSubmit }: Produc
             <p className="text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
           </div>
           {initialData?.imageUrl && (
-            <img
-              src={initialData.imageUrl}
+            <ProductImage
+              imageUrl={initialData.imageUrl}
               alt="Product"
-              className="mt-6 w-full max-h-72 object-cover rounded-xl border border-slate-200"
+              className="mt-6 max-h-72 w-full rounded-xl border border-slate-200"
             />
           )}
         </div>

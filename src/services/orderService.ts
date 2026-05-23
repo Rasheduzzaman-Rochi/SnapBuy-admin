@@ -37,7 +37,7 @@ function mapOrder(docId: string, data: any): Order {
       total: Number(item.total ?? Number(item.price ?? 0) * Number(item.quantity ?? 0)),
       sellerId: item.sellerId ?? undefined,
       sellerName: item.sellerName ?? undefined,
-      imageUrl: item.imageUrl ?? undefined,
+      imageUrl: item.imageUrl || item.imageURL || item.image || item.photoUrl || undefined,
     })),
     total: Number(data.total ?? data.totalAmount ?? 0),
     orderStatus: data.orderStatus ?? data.status ?? 'placed',

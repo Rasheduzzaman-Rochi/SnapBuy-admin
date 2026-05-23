@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { DataTableWrapper } from '@/components/ui/DataTableWrapper';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { MapPin, Phone, Mail, Package, TrendingUp } from 'lucide-react';
+import { ProductImage } from '@/components/products/ProductImage';
 
 interface OrderDetailsProps {
   order: Order;
@@ -168,7 +169,13 @@ export function OrderDetails({ order: initialOrder, onUpdateStatus }: OrderDetai
                 <tr key={index} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <Package size={20} className="text-slate-400" />
+                      {item.imageUrl ? (
+                        <ProductImage imageUrl={item.imageUrl} alt={item.productName} className="h-14 w-14 border border-slate-200 dark:border-slate-700" />
+                      ) : (
+                        <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800">
+                          <Package size={20} className="text-slate-400" />
+                        </div>
+                      )}
                       <p className="font-semibold text-slate-900">{item.productName}</p>
                     </div>
                   </td>
