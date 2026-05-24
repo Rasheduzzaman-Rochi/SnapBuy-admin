@@ -8,6 +8,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { AccessDenied } from '@/components/ui/AccessDenied';
 import { getProductById, updateProduct } from '@/services/productService';
 import { useAuth } from '@/hooks/useAuth';
+import { useSellerContext } from '@/hooks/useSellerContext';
+import { productBelongsToSeller } from '@/lib/sellerOwnership';
 import { Product } from '@/types/product';
 
 type EditProductPageProps = {
@@ -17,6 +19,7 @@ type EditProductPageProps = {
 export default function EditProductPage({ params }: EditProductPageProps) {
   const { id } = use(params);
   const { user, role, loading } = useAuth();
+  const { sellerContext, loading: sellerContextLoading } = useSellerContext(user, role);
   const [product, setProduct] = useState<Product | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -24,7 +27,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (loading || !role) return;
+    if (loading || sellerContextLoading || !role) return;
 
     if (role !== 'admin' && role !== 'approved') {
       setAccessDenied(true);
@@ -50,7 +53,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
           return;
         }
 
-        if (role !== 'admin' && loadedProduct.sellerId !== user?.uid) {
+        if (role !== 'admin' && (!sellerContext || !productBelongsToSeller(loadedProduct, sellerContext))) {
           setAccessDenied(true);
           setProduct(null);
           return;
@@ -69,7 +72,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     return () => {
       mounted = false;
     };
-  }, [id, loading, role, user?.uid]);
+  }, [id, loading, role, sellerContext, sellerContextLoading]);
 
   const handleSubmit = async (data: Partial<Product>) => {
     const result = await updateProduct(id, data);
@@ -78,7 +81,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     }
   };
 
-  if (loading || dataLoading) {
+  if (loading || sellerContextLoading || dataLoading) {
     return (
       <DashboardLayout>
         <div className="flex min-h-[50vh] items-center justify-center text-slate-600 dark:text-slate-300">

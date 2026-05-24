@@ -23,6 +23,13 @@ export interface AuthUser extends User {
   role?: UserRole;
 }
 
+export interface AdminProfile {
+  uid: string;
+  email: string;
+  name?: string;
+  createdAt?: any;
+}
+
 /**
  * Determine user role based on Firestore collections
  * 
@@ -70,6 +77,28 @@ export async function getUserAccessRole(uid: string): Promise<UserRole> {
     console.error('❌ Error code:', error.code);
     console.error('❌ Error message:', error.message);
     return 'none';
+  }
+}
+
+export async function getAdminProfile(uid: string): Promise<AdminProfile | null> {
+  try {
+    const adminDoc = await getDoc(doc(db, 'admins', uid));
+
+    if (!adminDoc.exists()) {
+      return null;
+    }
+
+    const data = adminDoc.data() as any;
+
+    return {
+      uid: adminDoc.id,
+      email: data.email ?? '',
+      name: data.name ?? '',
+      createdAt: data.createdAt ?? null,
+    };
+  } catch (error) {
+    console.error('Error getting admin profile:', error);
+    return null;
   }
 }
 

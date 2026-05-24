@@ -19,6 +19,7 @@ import { db } from '@/lib/firebase';
 import { Order } from '@/types/order';
 import { UserRole } from './authService';
 import { toMillis } from '@/lib/utils';
+import { orderBelongsToSeller, type SellerContext } from '@/lib/sellerOwnership';
 
 function mapOrder(docId: string, data: any): Order {
   const items = Array.isArray(data.items) ? data.items : [];
@@ -37,6 +38,7 @@ function mapOrder(docId: string, data: any): Order {
       total: Number(item.total ?? Number(item.price ?? 0) * Number(item.quantity ?? 0)),
       sellerId: item.sellerId ?? undefined,
       sellerName: item.sellerName ?? undefined,
+      shopName: item.shopName ?? item.storeName ?? undefined,
       imageUrl: item.imageUrl || item.imageURL || item.image || item.photoUrl || undefined,
     })),
     total: Number(data.total ?? data.totalAmount ?? 0),
@@ -55,21 +57,14 @@ function mapOrder(docId: string, data: any): Order {
  * - admin: get all orders
  * - seller: get orders where sellerIds array contains uid
  */
-export async function getOrders(role: UserRole, uid?: string): Promise<Order[]> {
+export async function getOrders(role: UserRole, uid?: string, sellerContext?: SellerContext | null): Promise<Order[]> {
   try {
     if (role !== 'admin' && !uid) {
       return [];
     }
 
     const ordersRef = collection(db, 'orders');
-    let q;
-
-    if (role === 'admin') {
-      q = query(ordersRef);
-    } else {
-      // Seller: orders containing their sellerId in sellerIds array
-      q = query(ordersRef, where('sellerIds', 'array-contains', uid));
-    }
+    const q = query(ordersRef);
 
     const querySnapshot = await getDocs(q);
     const orders: Order[] = [];
@@ -78,10 +73,14 @@ export async function getOrders(role: UserRole, uid?: string): Promise<Order[]> 
       orders.push(mapOrder(doc.id, doc.data()));
     });
 
-    // Sort by createdAt descending
-    orders.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+    const visibleOrders = role === 'admin'
+      ? orders
+      : orders.filter((order) => orderBelongsToSeller(order, sellerContext ?? { uid: uid ?? '' }));
 
-    return orders;
+    // Sort by createdAt descending
+    visibleOrders.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+
+    return visibleOrders;
   } catch (error) {
     console.error('Error fetching orders:', error);
     throw error;

@@ -8,6 +8,7 @@ export interface OrderItem {
   total: number;
   sellerId?: string;
   sellerName?: string;
+  shopName?: string;
   imageUrl?: string;
 }
 

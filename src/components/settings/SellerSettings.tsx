@@ -20,13 +20,23 @@ import { ActionButton } from '@/components/ui/ActionButton';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { InfoRow } from '@/components/ui/InfoRow';
 import { RoleBadge } from '@/components/ui/RoleBadge';
-import { mockSellerUser } from '@/lib/mockAuth';
-import { logout } from '@/services/authService';
+import { logout, type AuthUser } from '@/services/authService';
 import { useTheme } from '@/components/providers/ThemeProvider';
+import type { SellerApplication } from '@/types/seller';
+import { formatDate, getInitials } from '@/lib/utils';
 
-export function SellerSettings() {
+interface SellerSettingsProps {
+  user: AuthUser | null;
+  sellerProfile: SellerApplication | null;
+}
+
+export function SellerSettings({ user, sellerProfile }: SellerSettingsProps) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
+  const loginEmail = user?.email ?? '';
+  const ownerName = sellerProfile?.ownerName || loginEmail || 'Seller';
+  const shopName = sellerProfile?.shopName || 'N/A';
+  const status = sellerProfile?.status ?? 'approved';
 
   const handleLogout = async () => {
     await logout();
@@ -45,27 +55,27 @@ export function SellerSettings() {
         <div className="space-y-4">
           <div className="flex items-center gap-4 pb-6 border-b border-slate-200">
             <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
-              {mockSellerUser.avatar}
+              {getInitials(ownerName)}
             </div>
             <div>
-              <h4 className="text-lg font-bold text-slate-900">{mockSellerUser.ownerName}</h4>
-              <p className="text-sm text-slate-600">{mockSellerUser.email}</p>
+              <h4 className="text-lg font-bold text-slate-900">{ownerName}</h4>
+              <p className="text-sm text-slate-600">{loginEmail}</p>
             </div>
           </div>
 
           <InfoRow 
-            label="Email Address" 
-            value={mockSellerUser.email}
+            label="Login Email" 
+            value={loginEmail || 'N/A'}
             icon={<Mail size={18} />}
           />
           <InfoRow 
             label="Phone Number" 
-            value={mockSellerUser.phone}
+            value={sellerProfile?.phone || 'N/A'}
             icon={<Phone size={18} />}
           />
           <InfoRow 
             label="Seller ID" 
-            value={mockSellerUser.uid}
+            value={user?.uid ?? sellerProfile?.uid ?? 'N/A'}
             icon={<Store size={18} />}
           />
           <div className="pt-2">
@@ -84,34 +94,30 @@ export function SellerSettings() {
         <div className="space-y-4">
           <InfoRow 
             label="Shop Name" 
-            value={mockSellerUser.shopName}
+            value={shopName}
             icon={<Store size={18} />}
           />
           <InfoRow 
             label="Address" 
-            value={mockSellerUser.shopAddress}
+            value={sellerProfile?.address || 'N/A'}
             icon={<MapPin size={18} />}
           />
           <InfoRow 
             label="Business Category" 
-            value={mockSellerUser.category}
+            value={sellerProfile?.category || 'N/A'}
             icon={<Package size={18} />}
           />
           <div className="py-3 border-b border-slate-100 flex items-start justify-between last:border-b-0">
             <span className="text-sm font-medium text-slate-600">Shop Status</span>
             <StatusBadge 
-              text={mockSellerUser.status.charAt(0).toUpperCase() + mockSellerUser.status.slice(1)} 
-              variant={mockSellerUser.status === 'approved' ? 'success' : 'warning'}
+              text={status.charAt(0).toUpperCase() + status.slice(1)} 
+              variant={status === 'approved' ? 'success' : 'warning'}
               size="sm"
             />
           </div>
           <InfoRow 
             label="Created" 
-            value={new Date(mockSellerUser.createdAt).toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
+            value={formatDate(sellerProfile?.createdAt)}
             icon={<Clock size={18} />}
           />
         </div>

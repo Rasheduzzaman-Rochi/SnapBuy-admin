@@ -10,6 +10,8 @@ export interface Product {
   stock: number;
   sellerId: string;
   sellerName: string;
+  shopName?: string;
+  sellerEmail?: string;
   isActive: boolean;
   isFeatured: boolean;
   createdAt: DateValue;

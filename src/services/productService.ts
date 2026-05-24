@@ -8,7 +8,6 @@
 import {
   collection,
   query,
-  where,
   getDocs,
   getDoc,
   doc,
@@ -21,6 +20,7 @@ import { db } from '@/lib/firebase';
 import { Product } from '@/types/product';
 import { UserRole } from './authService';
 import { toMillis } from '@/lib/utils';
+import { productBelongsToSeller, type SellerContext } from '@/lib/sellerOwnership';
 
 function mapProduct(docId: string, data: any): Product {
   return {
@@ -33,6 +33,8 @@ function mapProduct(docId: string, data: any): Product {
     stock: Number(data.stock ?? 0),
     sellerId: data.sellerId ?? '',
     sellerName: data.sellerName ?? '',
+    shopName: data.shopName ?? data.storeName ?? '',
+    sellerEmail: data.sellerEmail ?? '',
     isActive: data.isActive ?? true,
     isFeatured: data.isFeatured ?? false,
     createdAt: data.createdAt ?? null,
@@ -45,21 +47,14 @@ function mapProduct(docId: string, data: any): Product {
  * - admin: get all products
  * - seller: get products where sellerId == uid
  */
-export async function getProducts(role: UserRole, uid?: string): Promise<Product[]> {
+export async function getProducts(role: UserRole, uid?: string, sellerContext?: SellerContext | null): Promise<Product[]> {
   try {
     if (role !== 'admin' && !uid) {
       return [];
     }
 
     const productsRef = collection(db, 'products');
-    let q;
-
-    if (role === 'admin') {
-      q = query(productsRef);
-    } else {
-      // Seller: only their products
-      q = query(productsRef, where('sellerId', '==', uid));
-    }
+    const q = query(productsRef);
 
     const querySnapshot = await getDocs(q);
     const products: Product[] = [];
@@ -68,9 +63,13 @@ export async function getProducts(role: UserRole, uid?: string): Promise<Product
       products.push(mapProduct(doc.id, doc.data()));
     });
 
-    products.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+    const visibleProducts = role === 'admin'
+      ? products
+      : products.filter((product) => productBelongsToSeller(product, sellerContext ?? { uid: uid ?? '' }));
 
-    return products;
+    visibleProducts.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+
+    return visibleProducts;
   } catch (error) {
     console.error('Error fetching products:', error);
     throw error;

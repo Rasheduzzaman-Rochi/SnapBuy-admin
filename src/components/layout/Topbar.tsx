@@ -1,30 +1,16 @@
 'use client';
 
 import { Bell, Menu, Search } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
-interface User {
-  name: string;
-  email: string;
-  role: string;
-}
-
 export function Topbar() {
-  const [user, setUser] = useState<User | null>(null);
   const pathname = usePathname();
-  const { role, loading } = useAuth();
+  const { user, role, loading } = useAuth();
   const { query, setQuery } = useDashboardSearch();
-
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-  }, []);
 
   const getInitials = (name: string) => name.split(' ').map((n) => n[0]).join('').toUpperCase();
 
@@ -45,6 +31,7 @@ export function Topbar() {
   }, [pathname]);
 
   const roleLabel = loading ? 'Loading...' : role === 'admin' ? 'Admin' : 'Seller';
+  const displayName = user?.displayName || user?.email || 'User';
 
   return (
     <header className="md:ml-64 sticky top-0 z-30 flex h-16 w-full items-center border-b border-slate-200 bg-white/90 backdrop-blur-md transition-colors dark:border-slate-800 dark:bg-slate-950/90">
@@ -86,13 +73,13 @@ export function Topbar() {
             {user && (
               <>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{user.name}</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{displayName}</p>
                   <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${roleBadgeColor}`}>
                     {roleLabel}
                   </span>
                 </div>
                 <div className={`w-10 h-10 bg-gradient-to-br ${profileBgColor} rounded-full flex items-center justify-center text-white font-semibold text-sm`}>
-                  {getInitials(user.name)}
+                  {getInitials(displayName)}
                 </div>
               </>
             )}
@@ -102,4 +89,3 @@ export function Topbar() {
     </header>
   );
 }
-

@@ -8,6 +8,7 @@ import { FormSection } from '@/components/ui/FormSection';
 import { ActionButton } from '@/components/ui/ActionButton';
 import { addProduct } from '@/services/productService';
 import { useAuth } from '@/hooks/useAuth';
+import { useSellerContext } from '@/hooks/useSellerContext';
 import { ProductImage } from '@/components/products/ProductImage';
 import { isGoogleDriveImageUrl } from '@/lib/imageUtils';
 
@@ -21,7 +22,8 @@ const categories = ['Electronics', 'Bags', 'Shoes', 'Accessories', 'Clothing', '
 
 export function ProductForm({ initialData, isEditing = false, onSubmit }: ProductFormProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const { sellerContext } = useSellerContext(user, role);
   const [formData, setFormData] = useState<Partial<Product>>(
     initialData || {
       name: '',
@@ -70,7 +72,9 @@ export function ProductForm({ initialData, isEditing = false, onSubmit }: Produc
           stock: productData.stock ?? 0,
           imageUrl,
           sellerId: user?.uid ?? '',
-          sellerName: user?.displayName ?? user?.email ?? '',
+          sellerName: sellerContext?.shopName || user?.displayName || user?.email || '',
+          shopName: sellerContext?.shopName || user?.displayName || user?.email || '',
+          sellerEmail: user?.email ?? '',
           isActive: productData.isActive ?? true,
           isFeatured: productData.isFeatured ?? false,
         });

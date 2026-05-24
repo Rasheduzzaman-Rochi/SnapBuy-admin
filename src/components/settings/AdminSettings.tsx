@@ -18,13 +18,20 @@ import {
 import { ActionButton } from '@/components/ui/ActionButton';
 import { InfoRow } from '@/components/ui/InfoRow';
 import { RoleBadge } from '@/components/ui/RoleBadge';
-import { mockAdminUser } from '@/lib/mockAuth';
-import { logout } from '@/services/authService';
+import { logout, type AdminProfile, type AuthUser } from '@/services/authService';
 import { useTheme } from '@/components/providers/ThemeProvider';
+import { formatDate, getInitials } from '@/lib/utils';
 
-export function AdminSettings() {
+interface AdminSettingsProps {
+  user: AuthUser | null;
+  adminProfile: AdminProfile | null;
+}
+
+export function AdminSettings({ user, adminProfile }: AdminSettingsProps) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
+  const adminEmail = user?.email ?? adminProfile?.email ?? '';
+  const adminName = adminProfile?.name || user?.displayName || adminEmail || 'Admin';
 
   const handleLogout = async () => {
     await logout();
@@ -43,31 +50,27 @@ export function AdminSettings() {
         <div className="space-y-4">
           <div className="flex items-center gap-4 pb-6 border-b border-slate-200">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
-              {mockAdminUser.avatar}
+              {getInitials(adminName)}
             </div>
             <div>
-              <h4 className="text-lg font-bold text-slate-900">{mockAdminUser.name}</h4>
-              <p className="text-sm text-slate-600">{mockAdminUser.email}</p>
+              <h4 className="text-lg font-bold text-slate-900">{adminName}</h4>
+              <p className="text-sm text-slate-600">{adminEmail}</p>
             </div>
           </div>
 
           <InfoRow 
             label="Email Address" 
-            value={mockAdminUser.email}
+            value={adminEmail || 'N/A'}
             icon={<Mail size={18} />}
           />
           <InfoRow 
             label="Admin ID" 
-            value={mockAdminUser.uid}
+            value={user?.uid ?? adminProfile?.uid ?? 'N/A'}
             icon={<Shield size={18} />}
           />
           <InfoRow 
             label="Joined" 
-            value={new Date(mockAdminUser.joinedAt).toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
+            value={formatDate(adminProfile?.createdAt)}
             icon={<Clock size={18} />}
           />
           <div className="pt-2">

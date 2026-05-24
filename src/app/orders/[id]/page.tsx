@@ -8,6 +8,8 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { AccessDenied } from '@/components/ui/AccessDenied';
 import { getOrderById, updateOrderStatus } from '@/services/orderService';
 import { useAuth } from '@/hooks/useAuth';
+import { useSellerContext } from '@/hooks/useSellerContext';
+import { orderBelongsToSeller } from '@/lib/sellerOwnership';
 import { Order } from '@/types/order';
 
 type OrderDetailsPageProps = {
@@ -17,6 +19,7 @@ type OrderDetailsPageProps = {
 export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const { id } = use(params);
   const { user, role, loading } = useAuth();
+  const { sellerContext, loading: sellerContextLoading } = useSellerContext(user, role);
   const [order, setOrder] = useState<Order | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -24,7 +27,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (loading || !role) return;
+    if (loading || sellerContextLoading || !role) return;
 
     if (role !== 'admin' && role !== 'approved') {
       setAccessDenied(true);
@@ -52,8 +55,8 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
 
         const sellerCanAccess =
           role === 'approved' &&
-          !!user?.uid &&
-          (loadedOrder.sellerIds?.includes(user.uid) || loadedOrder.sellerId === user.uid);
+          !!sellerContext &&
+          orderBelongsToSeller(loadedOrder, sellerContext);
 
         if (role !== 'admin' && !sellerCanAccess) {
           setAccessDenied(true);
@@ -74,7 +77,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     return () => {
       mounted = false;
     };
-  }, [id, loading, role, user?.uid]);
+  }, [id, loading, role, sellerContext, sellerContextLoading]);
 
   const handleUpdateStatus = async (status: Order['orderStatus']) => {
     const result = await updateOrderStatus(id, status);
@@ -84,7 +87,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     setOrder((current) => (current ? { ...current, orderStatus: status, updatedAt: new Date() } : current));
   };
 
-  if (loading || dataLoading) {
+  if (loading || sellerContextLoading || dataLoading) {
     return (
       <DashboardLayout>
         <div className="flex min-h-[50vh] items-center justify-center text-slate-600 dark:text-slate-300">

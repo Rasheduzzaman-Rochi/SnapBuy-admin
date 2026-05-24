@@ -7,6 +7,7 @@ import { RecentOrdersTable } from '@/components/dashboard/RecentOrdersTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAuth } from '@/hooks/useAuth';
+import { useSellerContext } from '@/hooks/useSellerContext';
 import { useEffect, useState } from 'react';
 import { getProducts } from '@/services/productService';
 import { getOrders } from '@/services/orderService';
@@ -25,9 +26,10 @@ export default function DashboardPage() {
   const [sellerApplications, setSellerApplications] = useState<SellerApplication[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { sellerContext, loading: sellerContextLoading } = useSellerContext(user, role);
 
   useEffect(() => {
-    if (loading || !role) return;
+    if (loading || sellerContextLoading || !role) return;
 
     let mounted = true;
 
@@ -37,9 +39,14 @@ export default function DashboardPage() {
         setError(null);
 
         const [loadedProducts, loadedOrders] = await Promise.all([
-          getProducts(role, user?.uid),
-          getOrders(role, user?.uid),
+          getProducts(role, user?.uid, sellerContext),
+          getOrders(role, user?.uid, sellerContext),
         ]);
+
+        if (role === 'approved') {
+          console.log('Filtered seller products count:', loadedProducts.length);
+          console.log('Filtered seller orders count:', loadedOrders.length);
+        }
 
         if (!mounted) return;
 
@@ -69,9 +76,9 @@ export default function DashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [loading, role, user?.uid]);
+  }, [loading, role, sellerContext, sellerContextLoading, user?.uid]);
 
-  if (loading || dataLoading) {
+  if (loading || sellerContextLoading || dataLoading) {
     return (
       <DashboardLayout>
         <div className="flex min-h-[50vh] items-center justify-center text-slate-600 dark:text-slate-300">
@@ -80,15 +87,6 @@ export default function DashboardPage() {
       </DashboardLayout>
     );
   }
-
-  // Filter data based on role
-  const currentSellerId = role === 'approved' ? user?.uid ?? null : null;
-  const sellerProducts = currentSellerId
-    ? products.filter((p) => p.sellerId === currentSellerId)
-    : products;
-  const sellerOrders = currentSellerId
-    ? orders.filter((o) => o.sellerIds?.includes(currentSellerId) || o.sellerId === currentSellerId)
-    : orders;
 
   // Admin stats
   const totalSellers = sellerApplications.length;
@@ -99,11 +97,11 @@ export default function DashboardPage() {
   const totalUsers = users.length;
 
   // Seller stats
-  const myProductCount = sellerProducts.length;
-  const myOrderCount = sellerOrders.length;
-  const mySales = sellerOrders.reduce((sum, order) => sum + order.total, 0);
-  const pendingOrders = sellerOrders.filter(o => o.orderStatus === 'placed' || o.orderStatus === 'processing').length;
-  const lowStockProducts = sellerProducts.filter(p => p.stock < 10);
+  const myProductCount = products.length;
+  const myOrderCount = orders.length;
+  const mySales = orders.reduce((sum, order) => sum + order.total, 0);
+  const pendingOrders = orders.filter(o => o.orderStatus === 'placed' || o.orderStatus === 'processing').length;
+  const lowStockProducts = products.filter(p => p.stock <= 5);
 
   // Render Admin Dashboard
   if (role === 'admin') {
@@ -249,7 +247,7 @@ export default function DashboardPage() {
         {/* Recent Orders Table */}
         <div className="space-y-4">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">My Recent Orders</h2>
-          <RecentOrdersTable orders={sellerOrders.slice(0, 5)} />
+          <RecentOrdersTable orders={orders.slice(0, 5)} />
         </div>
 
         {/* Quick Actions */}

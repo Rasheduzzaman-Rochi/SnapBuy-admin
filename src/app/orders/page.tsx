@@ -6,6 +6,7 @@ import { OrdersTable } from '@/components/orders/OrdersTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
 import { useAuth } from '@/hooks/useAuth';
+import { useSellerContext } from '@/hooks/useSellerContext';
 import { getOrders } from '@/services/orderService';
 import { Order } from '@/types/order';
 import { AccessDenied } from '@/components/ui/AccessDenied';
@@ -18,9 +19,10 @@ export default function OrdersPage() {
   const [error, setError] = useState<string | null>(null);
   const { query } = useDashboardSearch();
   const { user, role, loading } = useAuth();
+  const { sellerContext, loading: sellerContextLoading } = useSellerContext(user, role);
 
   useEffect(() => {
-    if (loading || !role) return;
+    if (loading || sellerContextLoading || !role) return;
 
     if (role !== 'admin' && role !== 'approved') {
       setOrders([]);
@@ -33,7 +35,10 @@ export default function OrdersPage() {
       try {
         setDataLoading(true);
         setError(null);
-        const orders = await getOrders(role, user?.uid);
+        const orders = await getOrders(role, user?.uid, sellerContext);
+        if (role === 'approved') {
+          console.log('Filtered seller orders count:', orders.length);
+        }
         if (mounted) setOrders(orders);
       } catch (err: any) {
         if (mounted) setError(err?.message || 'Failed to load orders.');
@@ -47,9 +52,9 @@ export default function OrdersPage() {
     return () => {
       mounted = false;
     };
-  }, [loading, role, user?.uid]);
+  }, [loading, role, sellerContext, sellerContextLoading, user?.uid]);
 
-  if (loading || dataLoading) {
+  if (loading || sellerContextLoading || dataLoading) {
     return (
       <DashboardLayout>
         <div className="flex min-h-[50vh] items-center justify-center text-slate-600 dark:text-slate-300">
@@ -77,7 +82,11 @@ export default function OrdersPage() {
       order.customerName.toLowerCase().includes(searchTerm) ||
       order.customerEmail.toLowerCase().includes(searchTerm) ||
       order.customerPhone.toLowerCase().includes(searchTerm) ||
-      order.items.some((item) => item.productName.toLowerCase().includes(searchTerm));
+      order.items.some((item) =>
+        item.productName.toLowerCase().includes(searchTerm) ||
+        (item.sellerName ?? '').toLowerCase().includes(searchTerm) ||
+        (item.shopName ?? '').toLowerCase().includes(searchTerm)
+      );
     const matchesOrderStatus = orderStatus === 'All' || order.orderStatus === orderStatus;
     const matchesPaymentStatus = paymentStatus === 'All' || order.paymentStatus === paymentStatus;
     return matchesSearch && matchesOrderStatus && matchesPaymentStatus;

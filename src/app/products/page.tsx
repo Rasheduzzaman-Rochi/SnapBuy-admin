@@ -9,6 +9,7 @@ import { ActionButton } from '@/components/ui/ActionButton';
 import { useState, useEffect } from 'react';
 import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
 import { useAuth } from '@/hooks/useAuth';
+import { useSellerContext } from '@/hooks/useSellerContext';
 import { getProducts } from '@/services/productService';
 import { Product } from '@/types/product';
 import { AccessDenied } from '@/components/ui/AccessDenied';
@@ -20,9 +21,10 @@ export default function ProductsPage() {
   const [error, setError] = useState<string | null>(null);
   const { query } = useDashboardSearch();
   const { user, role, loading } = useAuth();
+  const { sellerContext, loading: sellerContextLoading } = useSellerContext(user, role);
 
   useEffect(() => {
-    if (loading || !role) return;
+    if (loading || sellerContextLoading || !role) return;
 
     if (role !== 'admin' && role !== 'approved') {
       setProducts([]);
@@ -35,7 +37,10 @@ export default function ProductsPage() {
       try {
         setDataLoading(true);
         setError(null);
-        const products = await getProducts(role, user?.uid);
+        const products = await getProducts(role, user?.uid, sellerContext);
+        if (role === 'approved') {
+          console.log('Filtered seller products count:', products.length);
+        }
         if (mounted) setProducts(products);
       } catch (err: any) {
         if (mounted) setError(err?.message || 'Failed to load products.');
@@ -49,9 +54,9 @@ export default function ProductsPage() {
     return () => {
       mounted = false;
     };
-  }, [loading, role, user?.uid]);
+  }, [loading, role, sellerContext, sellerContextLoading, user?.uid]);
 
-  if (loading || dataLoading) {
+  if (loading || sellerContextLoading || dataLoading) {
     return (
       <DashboardLayout>
         <div className="flex min-h-[50vh] items-center justify-center text-slate-600 dark:text-slate-300">
@@ -76,7 +81,8 @@ export default function ProductsPage() {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm) ||
       product.category.toLowerCase().includes(searchTerm) ||
-      product.sellerName.toLowerCase().includes(searchTerm);
+      product.sellerName.toLowerCase().includes(searchTerm) ||
+      (product.shopName ?? '').toLowerCase().includes(searchTerm);
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
