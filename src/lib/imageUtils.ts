@@ -48,3 +48,16 @@ export function getImageCandidates(imageUrl?: string | null): string[] {
 
   return [trimmedUrl];
 }
+
+export function isGoogleDriveImageUrl(url?: string | null): boolean {
+  if (!url) return false;
+
+  const trimmedUrl = url.trim();
+
+  return (
+    trimmedUrl.includes('drive.google.com/file/d/') ||
+    trimmedUrl.includes('drive.google.com/open?id=') ||
+    trimmedUrl.includes('drive.google.com/uc?id=') ||
+    trimmedUrl.includes('drive.google.com/thumbnail?id=')
+  );
+}

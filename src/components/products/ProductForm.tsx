@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Upload, Save, X } from 'lucide-react';
+import { ImageIcon, Info, Link2, Save, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/types/product';
 import { FormSection } from '@/components/ui/FormSection';
@@ -9,6 +9,7 @@ import { ActionButton } from '@/components/ui/ActionButton';
 import { addProduct } from '@/services/productService';
 import { useAuth } from '@/hooks/useAuth';
 import { ProductImage } from '@/components/products/ProductImage';
+import { isGoogleDriveImageUrl } from '@/lib/imageUtils';
 
 interface ProductFormProps {
   initialData?: Product;
@@ -34,6 +35,7 @@ export function ProductForm({ initialData, isEditing = false, onSubmit }: Produc
   );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,9 +43,18 @@ export function ProductForm({ initialData, isEditing = false, onSubmit }: Produc
     try {
       setSubmitting(true);
       setError(null);
+      setImageError(null);
+
+      const imageUrl = formData.imageUrl?.trim() ?? '';
+
+      if (!imageUrl || !isGoogleDriveImageUrl(imageUrl)) {
+        setImageError('Please enter a valid Google Drive image link.');
+        return;
+      }
 
       const productData = {
         ...formData,
+        imageUrl,
         price: Number(formData.price ?? 0),
         stock: Number(formData.stock ?? 0),
       };
@@ -57,7 +68,7 @@ export function ProductForm({ initialData, isEditing = false, onSubmit }: Produc
           category: productData.category ?? '',
           price: productData.price ?? 0,
           stock: productData.stock ?? 0,
-          imageUrl: productData.imageUrl ?? '',
+          imageUrl,
           sellerId: user?.uid ?? '',
           sellerName: user?.displayName ?? user?.email ?? '',
           isActive: productData.isActive ?? true,
@@ -97,26 +108,63 @@ export function ProductForm({ initialData, isEditing = false, onSubmit }: Produc
         </div>
       )}
 
-      {/* Image Upload Section */}
+      {/* Product Image Section */}
       <FormSection
         title="Product Image"
-        description="Upload a product image (PNG, JPG, GIF up to 10MB)"
+        description="Add a Google Drive image link and preview it before saving"
       >
-        <div className="border-2 border-dashed border-slate-300 rounded-2xl p-8 md:p-12 text-center hover:border-slate-400 hover:bg-slate-50 transition-all cursor-pointer">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
-              <Upload size={32} className="text-blue-600" />
-            </div>
-            <p className="text-sm font-semibold text-slate-900">Click to upload or drag and drop</p>
-            <p className="text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
-          </div>
-          {initialData?.imageUrl && (
-            <ProductImage
-              imageUrl={initialData.imageUrl}
-              alt="Product"
-              className="mt-6 max-h-72 w-full rounded-xl border border-slate-200"
+        <div className="space-y-5">
+          <div>
+            <label htmlFor="imageUrl" className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <Link2 size={16} className="text-blue-600 dark:text-blue-300" />
+              Google Drive Image URL *
+            </label>
+            <input
+              id="imageUrl"
+              type="url"
+              name="imageUrl"
+              value={formData.imageUrl || ''}
+              onChange={(event) => {
+                handleChange(event);
+                if (imageError) setImageError(null);
+              }}
+              required
+              placeholder="Paste Google Drive share link here"
+              className="input-field w-full"
             />
-          )}
+            {imageError && (
+              <p className="mt-2 text-sm font-medium text-red-600 dark:text-red-300">{imageError}</p>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-500/20 dark:bg-blue-500/10">
+            <div className="flex items-start gap-3">
+              <Info size={18} className="mt-0.5 flex-shrink-0 text-blue-600 dark:text-blue-300" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  Only Google Drive image links are supported for now. Make sure the file is shared as "Anyone with the link can view".
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-200">
+                  The image file remains in your Google Drive; SnapBuy only stores the link.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
+            {formData.imageUrl?.trim() ? (
+              <ProductImage
+                imageUrl={formData.imageUrl}
+                alt={formData.name || 'Product image preview'}
+                className="h-64 w-full rounded-none"
+              />
+            ) : (
+              <div className="flex h-64 flex-col items-center justify-center gap-3 text-slate-400 dark:text-slate-500">
+                <ImageIcon size={42} />
+                <p className="text-sm font-medium">Image preview will appear here</p>
+              </div>
+            )}
+          </div>
         </div>
       </FormSection>
 

@@ -17,8 +17,7 @@ import {
   deleteDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { Product } from '@/types/product';
 import { UserRole } from './authService';
 import { toMillis } from '@/lib/utils';
@@ -106,20 +105,12 @@ export async function getProductById(productId: string): Promise<Product | null>
  * Add new product
  */
 export async function addProduct(
-  productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>,
-  imageFile?: File
+  productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
 ) {
   try {
-    let imageUrl = productData.imageUrl;
-
-    // Upload image if provided
-    if (imageFile) {
-      imageUrl = await uploadProductImage(imageFile);
-    }
-
     const docRef = await addDoc(collection(db, 'products'), {
       ...productData,
-      imageUrl,
+      imageUrl: productData.imageUrl.trim(),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -142,16 +133,13 @@ export async function addProduct(
  */
 export async function updateProduct(
   productId: string,
-  productData: Partial<Product>,
-  imageFile?: File
+  productData: Partial<Product>
 ) {
   try {
     let updateData = { ...productData };
 
-    // Upload new image if provided
-    if (imageFile) {
-      const imageUrl = await uploadProductImage(imageFile);
-      updateData.imageUrl = imageUrl;
+    if (typeof updateData.imageUrl === 'string') {
+      updateData.imageUrl = updateData.imageUrl.trim();
     }
 
     // Always update updatedAt
@@ -185,23 +173,5 @@ export async function deleteProduct(productId: string) {
       success: false,
       error: error.message || 'Failed to delete product',
     };
-  }
-}
-
-/**
- * Upload product image to Firebase Storage
- */
-export async function uploadProductImage(file: File): Promise<string> {
-  try {
-    const fileName = `${Date.now()}_${file.name}`;
-    const storageRef = ref(storage, `products/${fileName}`);
-
-    await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(storageRef);
-
-    return downloadURL;
-  } catch (error: any) {
-    console.error('Error uploading image:', error);
-    throw new Error(error.message || 'Failed to upload image');
   }
 }
