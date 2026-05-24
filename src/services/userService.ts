@@ -20,10 +20,15 @@ function mapUser(docId: string, data: any): User {
     uid: docId,
     name: data.name ?? data.displayName ?? data.email ?? 'Unnamed User',
     email: data.email ?? '',
-    phone: data.phone ?? '',
+    mobile: data.mobile ?? data.phone ?? '',
+    phone: data.phone ?? data.mobile ?? '',
     provider: data.provider ?? data.providerId ?? 'email',
+    accountType: data.accountType ?? '',
+    sellerStatus: data.sellerStatus ?? '',
+    isSeller: data.isSeller ?? false,
     status: data.status ?? 'active',
     createdAt: data.createdAt ?? null,
+    updatedAt: data.updatedAt ?? null,
   };
 }
 

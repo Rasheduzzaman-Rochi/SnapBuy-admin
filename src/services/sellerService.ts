@@ -12,6 +12,8 @@ import {
   getDocs,
   getDoc,
   doc,
+  deleteDoc,
+  setDoc,
   updateDoc,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -25,11 +27,13 @@ function mapSellerApplication(docId: string, data: any): SellerApplication {
     ownerName: data.ownerName ?? data.owner ?? '',
     shopName: data.shopName ?? data.storeName ?? '',
     email: data.email ?? '',
-    phone: data.phone ?? '',
+    mobile: data.mobile ?? data.phone ?? '',
+    phone: data.phone ?? data.mobile ?? '',
     address: data.address ?? '',
     category: data.category ?? '',
     status: (data.status || 'pending').toString().toLowerCase() as 'pending' | 'approved' | 'rejected',
     createdAt: data.createdAt ?? data.created_at ?? null,
+    updatedAt: data.updatedAt ?? null,
     approvedAt: data.approvedAt ?? null,
     approvedBy: data.approvedBy ?? null,
     rejectedAt: data.rejectedAt ?? null,
@@ -111,12 +115,19 @@ export async function approveSeller(uid: string, approvedBy: string) {
     const docRef = doc(db, 'sellerApplications', uid);
     await updateDoc(docRef, {
       status: 'approved',
+      updatedAt: serverTimestamp(),
       approvedAt: serverTimestamp(),
       approvedBy,
       rejectedAt: null,
       rejectedBy: null,
       rejectionReason: null,
     });
+
+    await setDoc(doc(db, 'users', uid), {
+      sellerStatus: 'approved',
+      isSeller: true,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
 
     return { success: true };
   } catch (error: any) {
@@ -136,6 +147,7 @@ export async function rejectSeller(uid: string, rejectedBy: string, reason?: str
     const docRef = doc(db, 'sellerApplications', uid);
     await updateDoc(docRef, {
       status: 'rejected',
+      updatedAt: serverTimestamp(),
       rejectedAt: serverTimestamp(),
       rejectedBy,
       rejectionReason: reason || null,
@@ -143,12 +155,40 @@ export async function rejectSeller(uid: string, rejectedBy: string, reason?: str
       approvedBy: null,
     });
 
+    await setDoc(doc(db, 'users', uid), {
+      sellerStatus: 'rejected',
+      isSeller: false,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
     return { success: true };
   } catch (error: any) {
     console.error('Error rejecting seller:', error);
     return {
       success: false,
       error: error.message || 'Failed to reject seller',
+    };
+  }
+}
+
+/**
+ * Remove seller dashboard access while keeping the buyer user account.
+ */
+export async function deleteSellerApplication(uid: string) {
+  try {
+    await deleteDoc(doc(db, 'sellerApplications', uid));
+    await setDoc(doc(db, 'users', uid), {
+      sellerStatus: 'removed',
+      isSeller: false,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error removing seller application:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to remove seller',
     };
   }
 }

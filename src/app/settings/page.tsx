@@ -7,7 +7,7 @@ import { SellerSettings } from '@/components/settings/SellerSettings';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function SettingsPage() {
-  const { user, role, adminProfile, sellerProfile, loading } = useAuth();
+  const { user, role, adminProfile, sellerProfile, userProfile, loading } = useAuth();
 
   // Show loading state while checking role
   if (loading || !role) {
@@ -39,7 +39,7 @@ export default function SettingsPage() {
         {isAdmin ? (
           <AdminSettings user={user} adminProfile={adminProfile} />
         ) : (
-          <SellerSettings user={user} sellerProfile={sellerProfile} />
+          <SellerSettings user={user} userProfile={userProfile} sellerProfile={sellerProfile} />
         )}
       </div>
     </DashboardLayout>

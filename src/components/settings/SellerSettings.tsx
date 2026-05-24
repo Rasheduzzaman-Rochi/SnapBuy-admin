@@ -23,18 +23,21 @@ import { RoleBadge } from '@/components/ui/RoleBadge';
 import { logout, type AuthUser } from '@/services/authService';
 import { useTheme } from '@/components/providers/ThemeProvider';
 import type { SellerApplication } from '@/types/seller';
+import type { User as AppUser } from '@/types/user';
 import { formatDate, getInitials } from '@/lib/utils';
 
 interface SellerSettingsProps {
   user: AuthUser | null;
+  userProfile: AppUser | null;
   sellerProfile: SellerApplication | null;
 }
 
-export function SellerSettings({ user, sellerProfile }: SellerSettingsProps) {
+export function SellerSettings({ user, userProfile, sellerProfile }: SellerSettingsProps) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const loginEmail = user?.email ?? '';
-  const ownerName = sellerProfile?.ownerName || loginEmail || 'Seller';
+  const ownerName = userProfile?.name || sellerProfile?.ownerName || loginEmail || 'Seller';
+  const mobile = userProfile?.mobile || userProfile?.phone || sellerProfile?.mobile || 'N/A';
   const shopName = sellerProfile?.shopName || 'N/A';
   const status = sellerProfile?.status ?? 'approved';
 
@@ -69,8 +72,8 @@ export function SellerSettings({ user, sellerProfile }: SellerSettingsProps) {
             icon={<Mail size={18} />}
           />
           <InfoRow 
-            label="Phone Number" 
-            value={sellerProfile?.phone || 'N/A'}
+            label="Mobile Number" 
+            value={mobile}
             icon={<Phone size={18} />}
           />
           <InfoRow 
@@ -96,6 +99,11 @@ export function SellerSettings({ user, sellerProfile }: SellerSettingsProps) {
             label="Shop Name" 
             value={shopName}
             icon={<Store size={18} />}
+          />
+          <InfoRow 
+            label="Shop Phone" 
+            value={sellerProfile?.phone || 'N/A'}
+            icon={<Phone size={18} />}
           />
           <InfoRow 
             label="Address" 

@@ -10,6 +10,7 @@ import {
   getSellerApplications,
   approveSeller,
   rejectSeller,
+  deleteSellerApplication,
 } from '@/services/sellerService';
 import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,6 +28,7 @@ export default function SellersPage() {
   const [applications, setApplications] = useState<SellerApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const { query } = useDashboardSearch();
   const { user, role, loading: authLoading } = useAuth();
   const uid = user?.uid;
@@ -45,6 +47,7 @@ export default function SellersPage() {
       try {
         setLoading(true);
         setError(null);
+        setSuccess(null);
         const apps = await getSellerApplications();
         if (!mounted) return;
         setApplications(apps);
@@ -67,9 +70,11 @@ export default function SellersPage() {
     if (!user) return;
     try {
       setError(null);
+      setSuccess(null);
       const result = await approveSeller(uid, user.uid);
       if (!result.success) throw new Error(result.error);
       setApplications((prev) => prev.map((a) => (a.uid === uid ? { ...a, status: 'approved', approvedBy: user.uid, approvedAt: new Date().toISOString() } : a)));
+      setSuccess('Seller approved successfully.');
     } catch (e: any) {
       console.error('Approve failed:', e);
       setError(e?.message || 'Failed to approve application');
@@ -80,12 +85,30 @@ export default function SellersPage() {
     if (!user) return;
     try {
       setError(null);
+      setSuccess(null);
       const result = await rejectSeller(uid, user.uid);
       if (!result.success) throw new Error(result.error);
       setApplications((prev) => prev.map((a) => (a.uid === uid ? { ...a, status: 'rejected', rejectedBy: user.uid, rejectedAt: new Date().toISOString() } : a)));
+      setSuccess('Seller rejected successfully.');
     } catch (e: any) {
       console.error('Reject failed:', e);
       setError(e?.message || 'Failed to reject application');
+    }
+  };
+
+  const handleDelete = async (sellerUid: string) => {
+    try {
+      setError(null);
+      setSuccess(null);
+      const result = await deleteSellerApplication(sellerUid);
+      if (!result.success) throw new Error(result.error);
+
+      const apps = await getSellerApplications();
+      setApplications(apps);
+      setSuccess('Seller removed successfully. The buyer account remains active.');
+    } catch (e: any) {
+      console.error('Remove seller failed:', e);
+      setError(e?.message || 'Failed to remove seller');
     }
   };
 
@@ -138,6 +161,11 @@ export default function SellersPage() {
             {error}
           </div>
         )}
+        {success && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200">
+            {success}
+          </div>
+        )}
         {!loading && applications.length === 0 && <p className="text-slate-600 dark:text-slate-300">No seller applications found.</p>}
 
         {!loading && applications.length > 0 && filteredApplications.length === 0 && (
@@ -149,6 +177,7 @@ export default function SellersPage() {
             applications={filteredApplications}
             onApprove={handleApprove}
             onReject={handleReject}
+            onDelete={handleDelete}
             adminUid={user.uid}
           />
         )}

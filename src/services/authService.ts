@@ -120,7 +120,8 @@ export async function registerSeller(
   email: string,
   password: string,
   sellerData: {
-    ownerName: string;
+    name: string;
+    mobile: string;
     shopName: string;
     phone: string;
     address: string;
@@ -131,26 +132,39 @@ export async function registerSeller(
     // Create user account
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const uid = userCredential.user.uid;
+    const name = sellerData.name.trim();
+    const mobile = sellerData.mobile.trim();
+    const shopPhone = sellerData.phone.trim() || mobile;
 
-    // Create user document
+    // Create/update buyer/general user profile for mobile app compatibility.
     await setDoc(doc(db, 'users', uid), {
       uid,
+      name,
       email,
+      mobile,
+      phone: mobile,
+      provider: 'password',
+      accountType: 'buyer',
+      sellerStatus: 'pending',
+      isSeller: false,
+      status: 'active',
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
+    }, { merge: true });
 
     // Create seller application
     await setDoc(doc(db, 'sellerApplications', uid), {
       uid,
-      ownerName: sellerData.ownerName,
-      shopName: sellerData.shopName,
       email,
-      phone: sellerData.phone,
-      address: sellerData.address,
+      ownerName: name,
+      mobile,
+      phone: shopPhone,
+      shopName: sellerData.shopName.trim(),
+      address: sellerData.address.trim(),
       category: sellerData.category,
       status: 'pending',
       createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
       approvedAt: null,
       approvedBy: null,
       rejectedAt: null,

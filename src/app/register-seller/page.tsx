@@ -11,18 +11,19 @@ export default function RegisterSellerPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    ownerName: '',
+    fullName: '',
+    mobileNumber: '',
     shopName: '',
-    email: '',
-    password: '',
-    phone: '',
+    shopPhone: '',
     address: '',
     category: '',
+    email: '',
+    password: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -35,12 +36,21 @@ export default function RegisterSellerPage() {
     setLoading(true);
 
     try {
+      const mobileNumber = formData.mobileNumber.trim();
+
+      if (mobileNumber.length < 10) {
+        setError('Mobile number must be at least 10 digits.');
+        setLoading(false);
+        return;
+      }
+
       // Dynamically import to defer Firebase loading
       const { registerSeller } = await import('@/services/authService');
       const result = await registerSeller(formData.email, formData.password, {
-        ownerName: formData.ownerName,
+        name: formData.fullName,
+        mobile: mobileNumber,
         shopName: formData.shopName,
-        phone: formData.phone,
+        phone: formData.shopPhone || mobileNumber,
         address: formData.address,
         category: formData.category,
       });
@@ -89,46 +99,33 @@ export default function RegisterSellerPage() {
               </div>
             )}
 
-            {/* Owner Information */}
+            {/* Buyer/Profile Information */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">1</div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Owner Information</h2>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Full Name *</label>
-                <input
-                  type="text"
-                  name="ownerName"
-                  value={formData.ownerName}
-                  onChange={handleChange}
-                  required
-                  placeholder="Your full name"
-                  className="input-field w-full"
-                />
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Buyer/Profile Information</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Email Address *</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Full Name *</label>
                   <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
+                    type="text"
+                    name="fullName"
+                    value={formData.fullName}
                     onChange={handleChange}
                     required
-                    placeholder="your@email.com"
+                    placeholder="Your full name"
                     className="input-field w-full"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Phone Number *</label>
+                  <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Mobile Number *</label>
                   <input
                     type="tel"
-                    name="phone"
-                    value={formData.phone}
+                    name="mobileNumber"
+                    value={formData.mobileNumber}
                     onChange={handleChange}
                     required
                     placeholder="01712345678"
@@ -145,17 +142,31 @@ export default function RegisterSellerPage() {
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">Shop Information</h2>
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Shop Name *</label>
-                <input
-                  type="text"
-                  name="shopName"
-                  value={formData.shopName}
-                  onChange={handleChange}
-                  required
-                  placeholder="Your shop name"
-                  className="input-field w-full"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Shop Name *</label>
+                  <input
+                    type="text"
+                    name="shopName"
+                    value={formData.shopName}
+                    onChange={handleChange}
+                    required
+                    placeholder="Your shop name"
+                    className="input-field w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Shop Phone</label>
+                  <input
+                    type="tel"
+                    name="shopPhone"
+                    value={formData.shopPhone}
+                    onChange={handleChange}
+                    placeholder="Use mobile if same"
+                    className="input-field w-full"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -185,39 +196,54 @@ export default function RegisterSellerPage() {
                     value={formData.address}
                     onChange={handleChange}
                     required
-                    placeholder="Full address"
+                    placeholder="Full shop address"
                     className="input-field w-full"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Account Setup */}
+            {/* Account Information */}
             <div className="space-y-4 border-t border-slate-200 pt-6 dark:border-slate-800">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">3</div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Account Setup</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Account Information</h2>
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Password *</label>
-                <div className="relative">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Email Address *</label>
                   <input
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    value={formData.password}
+                    type="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
                     required
-                    placeholder="Create a strong password"
-                    className="input-field w-full pr-12"
+                    placeholder="your@email.com"
+                    className="input-field w-full"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-900 dark:text-slate-100">Password *</label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      placeholder="Create a strong password"
+                      className="input-field w-full pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 transition-colors dark:text-slate-400 dark:hover:text-slate-200"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

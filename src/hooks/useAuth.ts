@@ -21,6 +21,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebaseAuth';
 import type { AuthUser, UserRole, AdminProfile } from '@/services/authService';
 import type { SellerApplication } from '@/types/seller';
+import type { User as AppUser } from '@/types/user';
 import { getSellerShopName, type SellerContext } from '@/lib/sellerOwnership';
 
 export interface UseAuthReturn {
@@ -28,6 +29,7 @@ export interface UseAuthReturn {
   role: UserRole | null;
   adminProfile: AdminProfile | null;
   sellerProfile: SellerApplication | null;
+  userProfile: AppUser | null;
   sellerContext: SellerContext | null;
   loading: boolean;
   isAuthenticated: boolean;
@@ -44,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole | null>(null);
   const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
   const [sellerProfile, setSellerProfile] = useState<SellerApplication | null>(null);
+  const [userProfile, setUserProfile] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const loadedUidRef = useRef<string | null>(null);
 
@@ -54,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setRole(null);
       setAdminProfile(null);
       setSellerProfile(null);
+      setUserProfile(null);
       return;
     }
 
@@ -65,9 +69,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextRole = await getUserAccessRole(user.uid);
     const nextUser = { ...user, role: nextRole } as AuthUser;
     loadedUidRef.current = user.uid;
+    const { getUserById } = await import('@/services/userService');
+    const nextUserProfile = await getUserById(user.uid).catch((error) => {
+      console.error('Error loading user profile:', error);
+      return null;
+    });
 
     setFirebaseUser(nextUser);
     setRole(nextRole);
+    setUserProfile(nextUserProfile);
 
     if (nextRole === 'admin') {
       const profile = await getAdminProfile(user.uid);
@@ -137,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role,
       adminProfile,
       sellerProfile,
+      userProfile,
       sellerContext,
       loading,
       isAuthenticated,
@@ -145,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isPending,
       refreshRole,
     };
-  }, [adminProfile, firebaseUser, loading, refreshRole, role, sellerContext, sellerProfile]);
+  }, [adminProfile, firebaseUser, loading, refreshRole, role, sellerContext, sellerProfile, userProfile]);
 
   return createElement(AuthContext.Provider, { value }, children);
 }
