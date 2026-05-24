@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import { DashboardSearchProvider } from '@/components/providers/DashboardSearchProvider';
-
-const inter = Inter({ subsets: ['latin'] });
+import { AuthProvider } from '@/hooks/useAuth';
 
 const themeScript = `
 (() => {
@@ -39,9 +37,11 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={inter.className}>
+      <body>
         <ThemeProvider>
-          <DashboardSearchProvider>{children}</DashboardSearchProvider>
+          <AuthProvider>
+            <DashboardSearchProvider>{children}</DashboardSearchProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -68,7 +68,7 @@ export function OrderDetails({ order: initialOrder, onUpdateStatus }: OrderDetai
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Order Header Card */}
       <div className="bg-gradient-to-r from-blue-50 to-slate-50 rounded-2xl border border-slate-200 p-6 lg:p-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">

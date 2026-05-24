@@ -1,24 +1,40 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { UsersTable } from '@/components/users/UsersTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { AccessDenied } from '@/components/ui/AccessDenied';
 import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
 import { useAuth } from '@/hooks/useAuth';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getAllUsers } from '@/services/userService';
 import { User } from '@/types/user';
+
+const UsersTable = dynamic(
+  () => import('@/components/users/UsersTable').then((mod) => mod.UsersTable),
+  {
+    loading: () => (
+      <div className="h-64 animate-pulse rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900" />
+    ),
+  }
+);
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { query } = useDashboardSearch();
-  const { role, loading } = useAuth();
+  const { user, role, loading } = useAuth();
+  const uid = user?.uid;
+  const fetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading || role !== 'admin') return;
+    if (!uid) return;
+
+    const fetchKey = `admin:${uid}`;
+    if (fetchKeyRef.current === fetchKey) return;
+    fetchKeyRef.current = fetchKey;
 
     let mounted = true;
 
@@ -40,7 +56,17 @@ export default function UsersPage() {
     return () => {
       mounted = false;
     };
-  }, [loading, role]);
+  }, [loading, role, uid]);
+
+  const filteredUsers = useMemo(() => {
+    const searchTerm = query.trim().toLowerCase();
+
+    return users.filter((user) =>
+      user.name.toLowerCase().includes(searchTerm) ||
+      user.email.toLowerCase().includes(searchTerm) ||
+      user.phone.toLowerCase().includes(searchTerm)
+    );
+  }, [query, users]);
 
   if (loading || dataLoading) {
     return (
@@ -61,16 +87,9 @@ export default function UsersPage() {
     );
   }
 
-  const searchTerm = query.trim().toLowerCase();
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(searchTerm) ||
-    user.email.toLowerCase().includes(searchTerm) ||
-    user.phone.toLowerCase().includes(searchTerm)
-  );
-
   return (
     <DashboardLayout>
-      <div className="mx-auto w-full max-w-7xl space-y-8">
+      <div className="mx-auto w-full max-w-7xl space-y-6">
         {/* Header */}
         <PageHeader
           title="Users"

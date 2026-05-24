@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { SellerApplicationsTable } from '@/components/sellers/SellerApplicationsTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { AccessDenied } from '@/components/ui/AccessDenied';
 import type { SellerApplication } from '@/types/seller';
@@ -14,15 +14,31 @@ import {
 import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
 import { useAuth } from '@/hooks/useAuth';
 
+const SellerApplicationsTable = dynamic(
+  () => import('@/components/sellers/SellerApplicationsTable').then((mod) => mod.SellerApplicationsTable),
+  {
+    loading: () => (
+      <div className="h-64 animate-pulse rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900" />
+    ),
+  }
+);
+
 export default function SellersPage() {
   const [applications, setApplications] = useState<SellerApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { query } = useDashboardSearch();
   const { user, role, loading: authLoading } = useAuth();
+  const uid = user?.uid;
+  const fetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (authLoading || role !== 'admin') return;
+    if (!uid) return;
+
+    const fetchKey = `admin:${uid}`;
+    if (fetchKeyRef.current === fetchKey) return;
+    fetchKeyRef.current = fetchKey;
 
     let mounted = true;
     const load = async () => {
@@ -45,7 +61,7 @@ export default function SellersPage() {
     return () => {
       mounted = false;
     };
-  }, [authLoading, role]);
+  }, [authLoading, role, uid]);
 
   const handleApprove = async (uid: string) => {
     if (!user) return;
@@ -73,6 +89,21 @@ export default function SellersPage() {
     }
   };
 
+  const pendingCount = useMemo(
+    () => applications.filter((a) => (a.status || 'pending') === 'pending').length,
+    [applications]
+  );
+  const filteredApplications = useMemo(() => {
+    const searchTerm = query.trim().toLowerCase();
+
+    return applications.filter((app) =>
+      app.shopName.toLowerCase().includes(searchTerm) ||
+      app.ownerName.toLowerCase().includes(searchTerm) ||
+      app.email.toLowerCase().includes(searchTerm) ||
+      app.phone.toLowerCase().includes(searchTerm)
+    );
+  }, [applications, query]);
+
   // Loading user
   if (authLoading) {
     return (
@@ -96,18 +127,9 @@ export default function SellersPage() {
     );
   }
 
-  const pendingCount = applications.filter((a) => (a.status || 'pending') === 'pending').length;
-  const searchTerm = query.trim().toLowerCase();
-  const filteredApplications = applications.filter((app) =>
-    app.shopName.toLowerCase().includes(searchTerm) ||
-    app.ownerName.toLowerCase().includes(searchTerm) ||
-    app.email.toLowerCase().includes(searchTerm) ||
-    app.phone.toLowerCase().includes(searchTerm)
-  );
-
   return (
     <DashboardLayout>
-      <div className="mx-auto w-full max-w-7xl space-y-8">
+      <div className="mx-auto w-full max-w-7xl space-y-6">
         <PageHeader title="Seller Applications" description={`${pendingCount} pending review${pendingCount !== 1 ? 's' : ''}`} />
 
         {loading && <p className="text-slate-600 dark:text-slate-300">Loading seller applications...</p>}

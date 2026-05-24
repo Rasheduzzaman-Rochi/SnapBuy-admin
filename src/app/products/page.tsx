@@ -1,18 +1,27 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { ProductsTable } from '@/components/products/ProductsTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { ActionButton } from '@/components/ui/ActionButton';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
 import { useAuth } from '@/hooks/useAuth';
 import { useSellerContext } from '@/hooks/useSellerContext';
 import { getProducts } from '@/services/productService';
 import { Product } from '@/types/product';
 import { AccessDenied } from '@/components/ui/AccessDenied';
+
+const ProductsTable = dynamic(
+  () => import('@/components/products/ProductsTable').then((mod) => mod.ProductsTable),
+  {
+    loading: () => (
+      <div className="h-64 animate-pulse rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900" />
+    ),
+  }
+);
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -22,6 +31,10 @@ export default function ProductsPage() {
   const { query } = useDashboardSearch();
   const { user, role, loading } = useAuth();
   const { sellerContext, loading: sellerContextLoading } = useSellerContext(user, role);
+  const uid = user?.uid;
+  const email = user?.email;
+  const sellerShopName = sellerContext?.shopName ?? '';
+  const fetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading || sellerContextLoading || !role) return;
@@ -31,16 +44,23 @@ export default function ProductsPage() {
       return;
     }
 
+    if (role === 'approved' && !uid) return;
+
+    const fetchKey = `${role}:${uid ?? 'admin'}:${sellerShopName}`;
+    if (fetchKeyRef.current === fetchKey) return;
+    fetchKeyRef.current = fetchKey;
+
     let mounted = true;
 
     async function loadProducts() {
       try {
         setDataLoading(true);
         setError(null);
-        const products = await getProducts(role, user?.uid, sellerContext);
-        if (role === 'approved') {
-          console.log('Filtered seller products count:', products.length);
-        }
+        const products = await getProducts(
+          role,
+          uid,
+          role === 'approved' ? { uid: uid ?? '', email, shopName: sellerShopName } : null
+        );
         if (mounted) setProducts(products);
       } catch (err: any) {
         if (mounted) setError(err?.message || 'Failed to load products.');
@@ -54,7 +74,22 @@ export default function ProductsPage() {
     return () => {
       mounted = false;
     };
-  }, [loading, role, sellerContext, sellerContextLoading, user?.uid]);
+  }, [email, loading, role, sellerContextLoading, sellerShopName, uid]);
+
+  const categories = useMemo(() => ['All', ...new Set(products.map((p) => p.category))], [products]);
+  const filteredProducts = useMemo(() => {
+    const searchTerm = query.trim().toLowerCase();
+
+    return products.filter((product) => {
+      const matchesSearch =
+        product.name.toLowerCase().includes(searchTerm) ||
+        product.category.toLowerCase().includes(searchTerm) ||
+        product.sellerName.toLowerCase().includes(searchTerm) ||
+        (product.shopName ?? '').toLowerCase().includes(searchTerm);
+      const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, query, selectedCategory]);
 
   if (loading || sellerContextLoading || dataLoading) {
     return (
@@ -74,19 +109,6 @@ export default function ProductsPage() {
     );
   }
 
-  const categories = ['All', ...new Set(products.map((p) => p.category))];
-  const searchTerm = query.trim().toLowerCase();
-
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm) ||
-      product.category.toLowerCase().includes(searchTerm) ||
-      product.sellerName.toLowerCase().includes(searchTerm) ||
-      (product.shopName ?? '').toLowerCase().includes(searchTerm);
-    const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
   const isAdmin = role === 'admin';
   const pageTitle = isAdmin ? 'All Products' : 'My Products';
   const pageDescription = isAdmin 
@@ -95,7 +117,7 @@ export default function ProductsPage() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto w-full max-w-7xl space-y-8">
+      <div className="mx-auto w-full max-w-7xl space-y-6">
         {/* Header */}
         <PageHeader
           title={pageTitle}

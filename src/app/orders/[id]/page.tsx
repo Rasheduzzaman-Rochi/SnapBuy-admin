@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { OrderDetails } from '@/components/orders/OrderDetails';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -25,6 +25,10 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const [notFound, setNotFound] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const uid = user?.uid;
+  const email = user?.email;
+  const sellerShopName = sellerContext?.shopName ?? '';
+  const fetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading || sellerContextLoading || !role) return;
@@ -33,6 +37,12 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
       setAccessDenied(true);
       return;
     }
+
+    if (role === 'approved' && !uid) return;
+
+    const fetchKey = `${id}:${role}:${uid ?? 'admin'}:${sellerShopName}`;
+    if (fetchKeyRef.current === fetchKey) return;
+    fetchKeyRef.current = fetchKey;
 
     let mounted = true;
 
@@ -53,10 +63,13 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
           return;
         }
 
+        const sellerLookupContext = role === 'approved'
+          ? { uid: uid ?? '', email, shopName: sellerShopName }
+          : null;
         const sellerCanAccess =
           role === 'approved' &&
-          !!sellerContext &&
-          orderBelongsToSeller(loadedOrder, sellerContext);
+          !!sellerLookupContext &&
+          orderBelongsToSeller(loadedOrder, sellerLookupContext);
 
         if (role !== 'admin' && !sellerCanAccess) {
           setAccessDenied(true);
@@ -77,7 +90,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     return () => {
       mounted = false;
     };
-  }, [id, loading, role, sellerContext, sellerContextLoading]);
+  }, [email, id, loading, role, sellerContextLoading, sellerShopName, uid]);
 
   const handleUpdateStatus = async (status: Order['orderStatus']) => {
     const result = await updateOrderStatus(id, status);
@@ -129,7 +142,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Header */}
         <PageHeader
           title="Order Details"

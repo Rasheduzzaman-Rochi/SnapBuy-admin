@@ -8,6 +8,7 @@
 import {
   collection,
   query,
+  where,
   getDocs,
   getDoc,
   doc,
@@ -16,7 +17,7 @@ import {
   deleteDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebaseDb';
 import { Product } from '@/types/product';
 import { UserRole } from './authService';
 import { toMillis } from '@/lib/utils';
@@ -42,10 +43,25 @@ function mapProduct(docId: string, data: any): Product {
   };
 }
 
+function sortProductsByCreatedAt(products: Product[]): Product[] {
+  return [...products].sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+}
+
+async function getProductsFromQuery(productsQuery: ReturnType<typeof query>): Promise<Product[]> {
+  const querySnapshot = await getDocs(productsQuery);
+  const products: Product[] = [];
+
+  querySnapshot.forEach((doc) => {
+    products.push(mapProduct(doc.id, doc.data()));
+  });
+
+  return products;
+}
+
 /**
  * Get products based on role and user ID
  * - admin: get all products
- * - seller: get products where sellerId == uid
+ * - seller: get products where sellerId == uid, then legacy shop-name fallback if needed
  */
 export async function getProducts(role: UserRole, uid?: string, sellerContext?: SellerContext | null): Promise<Product[]> {
   try {
@@ -54,22 +70,26 @@ export async function getProducts(role: UserRole, uid?: string, sellerContext?: 
     }
 
     const productsRef = collection(db, 'products');
-    const q = query(productsRef);
 
-    const querySnapshot = await getDocs(q);
-    const products: Product[] = [];
+    if (role === 'admin') {
+      const products = await getProductsFromQuery(query(productsRef));
+      return sortProductsByCreatedAt(products);
+    }
 
-    querySnapshot.forEach((doc) => {
-      products.push(mapProduct(doc.id, doc.data()));
-    });
+    const sellerIdProducts = await getProductsFromQuery(
+      query(productsRef, where('sellerId', '==', uid))
+    );
 
-    const visibleProducts = role === 'admin'
-      ? products
-      : products.filter((product) => productBelongsToSeller(product, sellerContext ?? { uid: uid ?? '' }));
+    if (sellerIdProducts.length > 0) {
+      return sortProductsByCreatedAt(sellerIdProducts);
+    }
 
-    visibleProducts.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
+    const products = await getProductsFromQuery(query(productsRef));
+    const visibleProducts = products.filter((product) =>
+      productBelongsToSeller(product, sellerContext ?? { uid: uid ?? '' })
+    );
 
-    return visibleProducts;
+    return sortProductsByCreatedAt(visibleProducts);
   } catch (error) {
     console.error('Error fetching products:', error);
     throw error;

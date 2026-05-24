@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 export default function AddProductPage() {
   return (
     <DashboardLayout>
-      <div className="mx-auto w-full max-w-6xl space-y-8">
+      <div className="mx-auto w-full max-w-6xl space-y-6">
         {/* Header */}
         <PageHeader
           title="Add Product"

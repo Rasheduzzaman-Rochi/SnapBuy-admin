@@ -59,56 +59,52 @@ export function ProductsTable({ products }: ProductsTableProps) {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-          {products.map((product) => {
-            console.log('Product imageUrl:', product.imageUrl);
-
-            return (
-              <tr key={product.id} className="hover:bg-slate-50 transition-colors dark:hover:bg-slate-800/60">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-4">
-                    <ProductImage imageUrl={product.imageUrl} alt={product.name} className="h-12 w-12 border border-slate-200 dark:border-slate-700" />
-                    <div className="flex-1">
-                      <p className="font-semibold text-slate-900 text-sm dark:text-slate-100">{product.name}</p>
-                      <p className="text-xs text-slate-500 sm:hidden dark:text-slate-400">{product.category}</p>
-                    </div>
+          {products.map((product) => (
+            <tr key={product.id} className="hover:bg-slate-50 transition-colors dark:hover:bg-slate-800/60">
+              <td className="px-6 py-4">
+                <div className="flex items-center gap-4">
+                  <ProductImage imageUrl={product.imageUrl} alt={product.name} className="h-12 w-12 border border-slate-200 dark:border-slate-700" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-slate-900 text-sm dark:text-slate-100">{product.name}</p>
+                    <p className="text-xs text-slate-500 sm:hidden dark:text-slate-400">{product.category}</p>
                   </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell dark:text-slate-400">{product.category}</td>
-                <td className="px-6 py-4 text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(product.price)}</td>
-                <td className="px-6 py-4 hidden md:table-cell">
-                  <StatusBadge
-                    text={getStockLabel(product.stock)}
-                    variant={getStockBadgeVariant(product.stock)}
-                    size="sm"
-                  />
-                </td>
-                <td className="px-6 py-4 hidden lg:table-cell">
-                  <StatusBadge
-                    text={product.isActive ? 'Active' : 'Inactive'}
-                    variant={product.isActive ? 'success' : 'default'}
-                    size="sm"
-                  />
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center justify-center gap-1">
-                    <Link
-                      href={`/products/${product.id}/edit`}
-                      className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
-                      title="Edit product"
-                    >
-                      <Edit size={18} />
-                    </Link>
-                    <button
-                      className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
-                      title="Delete product"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
+                </div>
+              </td>
+              <td className="px-6 py-4 text-sm text-slate-600 hidden sm:table-cell dark:text-slate-400">{product.category}</td>
+              <td className="px-6 py-4 text-sm font-semibold text-slate-900 dark:text-slate-100">{formatCurrency(product.price)}</td>
+              <td className="px-6 py-4 hidden md:table-cell">
+                <StatusBadge
+                  text={getStockLabel(product.stock)}
+                  variant={getStockBadgeVariant(product.stock)}
+                  size="sm"
+                />
+              </td>
+              <td className="px-6 py-4 hidden lg:table-cell">
+                <StatusBadge
+                  text={product.isActive ? 'Active' : 'Inactive'}
+                  variant={product.isActive ? 'success' : 'default'}
+                  size="sm"
+                />
+              </td>
+              <td className="px-6 py-4">
+                <div className="flex items-center justify-center gap-1">
+                  <Link
+                    href={`/products/${product.id}/edit`}
+                    className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors"
+                    title="Edit product"
+                  >
+                    <Edit size={18} />
+                  </Link>
+                  <button
+                    className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                    title="Delete product"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </DataTableWrapper>

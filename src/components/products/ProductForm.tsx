@@ -105,7 +105,7 @@ export function ProductForm({ initialData, isEditing = false, onSubmit }: Produc
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl">
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-200">
           {error}
@@ -300,7 +300,7 @@ export function ProductForm({ initialData, isEditing = false, onSubmit }: Produc
       </FormSection>
 
       {/* Action Buttons */}
-      <div className="flex gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <ActionButton
           type="submit"
           variant="primary"

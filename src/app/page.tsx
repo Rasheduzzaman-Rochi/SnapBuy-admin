@@ -16,14 +16,12 @@ export default function Home() {
             <ThemeToggle />
             <Link
               href="/login"
-              onClick={() => console.log('Admin Login button clicked')}
               className="px-6 py-2 font-semibold text-slate-700 transition-colors hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
             >
               Login
             </Link>
             <Link
               href="/register-seller"
-              onClick={() => console.log('Become a Seller button clicked')}
               className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 active:scale-95"
             >
               Become a Seller
@@ -55,7 +53,6 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Link
                 href="/login"
-                onClick={() => console.log('Admin Login button clicked')}
                 className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 active:scale-95"
               >
                 Admin Login
@@ -63,7 +60,6 @@ export default function Home() {
               </Link>
               <Link
                 href="/register-seller"
-                onClick={() => console.log('Apply as Seller button clicked')}
                 className="flex items-center justify-center gap-2 rounded-xl border-2 border-blue-200 bg-white px-8 py-4 font-semibold text-blue-600 transition-all hover:border-blue-600 hover:bg-blue-50 dark:border-slate-800 dark:bg-slate-900 dark:text-blue-300 dark:hover:bg-slate-800"
               >
                 Apply as Seller

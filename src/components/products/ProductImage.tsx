@@ -17,7 +17,6 @@ export function ProductImage({ imageUrl, alt, className }: ProductImageProps) {
   const [failed, setFailed] = useState(candidates.length === 0);
 
   useEffect(() => {
-    console.log('Image candidates:', candidates);
     setCurrentIndex(0);
     setFailed(candidates.length === 0);
   }, [candidates]);
@@ -57,6 +56,8 @@ export function ProductImage({ imageUrl, alt, className }: ProductImageProps) {
       src={currentSrc}
       alt={alt}
       referrerPolicy="no-referrer"
+      loading="lazy"
+      decoding="async"
       className={cn('rounded-lg object-cover', className)}
       onError={handleError}
     />

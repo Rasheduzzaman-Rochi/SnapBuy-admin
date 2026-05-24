@@ -6,9 +6,9 @@ interface DataTableWrapperProps {
 
 export function DataTableWrapper({ children }: DataTableWrapperProps) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm dark:bg-slate-900 dark:border-slate-800">
+    <div className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:bg-slate-900 dark:border-slate-800">
       <div className="overflow-x-auto">
-        <div className="inline-block min-w-full">{children}</div>
+        <div className="inline-block min-w-full align-middle [&_table]:min-w-[720px]">{children}</div>
       </div>
     </div>
   );

@@ -11,7 +11,7 @@ import {
   getDoc,
   doc,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebaseDb';
 import { User } from '@/types/user';
 import { toMillis } from '@/lib/utils';
 

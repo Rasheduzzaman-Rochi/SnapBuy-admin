@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { OrdersTable } from '@/components/orders/OrdersTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +10,15 @@ import { useSellerContext } from '@/hooks/useSellerContext';
 import { getOrders } from '@/services/orderService';
 import { Order } from '@/types/order';
 import { AccessDenied } from '@/components/ui/AccessDenied';
+
+const OrdersTable = dynamic(
+  () => import('@/components/orders/OrdersTable').then((mod) => mod.OrdersTable),
+  {
+    loading: () => (
+      <div className="h-64 animate-pulse rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900" />
+    ),
+  }
+);
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -20,6 +29,10 @@ export default function OrdersPage() {
   const { query } = useDashboardSearch();
   const { user, role, loading } = useAuth();
   const { sellerContext, loading: sellerContextLoading } = useSellerContext(user, role);
+  const uid = user?.uid;
+  const email = user?.email;
+  const sellerShopName = sellerContext?.shopName ?? '';
+  const fetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading || sellerContextLoading || !role) return;
@@ -29,16 +42,23 @@ export default function OrdersPage() {
       return;
     }
 
+    if (role === 'approved' && !uid) return;
+
+    const fetchKey = `${role}:${uid ?? 'admin'}:${sellerShopName}`;
+    if (fetchKeyRef.current === fetchKey) return;
+    fetchKeyRef.current = fetchKey;
+
     let mounted = true;
 
     async function loadOrders() {
       try {
         setDataLoading(true);
         setError(null);
-        const orders = await getOrders(role, user?.uid, sellerContext);
-        if (role === 'approved') {
-          console.log('Filtered seller orders count:', orders.length);
-        }
+        const orders = await getOrders(
+          role,
+          uid,
+          role === 'approved' ? { uid: uid ?? '', email, shopName: sellerShopName } : null
+        );
         if (mounted) setOrders(orders);
       } catch (err: any) {
         if (mounted) setError(err?.message || 'Failed to load orders.');
@@ -52,7 +72,29 @@ export default function OrdersPage() {
     return () => {
       mounted = false;
     };
-  }, [loading, role, sellerContext, sellerContextLoading, user?.uid]);
+  }, [email, loading, role, sellerContextLoading, sellerShopName, uid]);
+
+  const orderStatuses = ['All', 'placed', 'processing', 'shipped', 'delivered', 'cancelled'];
+  const paymentStatuses = ['All', 'pending', 'paid_test', 'paid', 'failed'];
+  const filteredOrders = useMemo(() => {
+    const searchTerm = query.trim().toLowerCase();
+
+    return orders.filter((order) => {
+      const matchesSearch =
+        order.id.toLowerCase().includes(searchTerm) ||
+        order.customerName.toLowerCase().includes(searchTerm) ||
+        order.customerEmail.toLowerCase().includes(searchTerm) ||
+        order.customerPhone.toLowerCase().includes(searchTerm) ||
+        order.items.some((item) =>
+          item.productName.toLowerCase().includes(searchTerm) ||
+          (item.sellerName ?? '').toLowerCase().includes(searchTerm) ||
+          (item.shopName ?? '').toLowerCase().includes(searchTerm)
+        );
+      const matchesOrderStatus = orderStatus === 'All' || order.orderStatus === orderStatus;
+      const matchesPaymentStatus = paymentStatus === 'All' || order.paymentStatus === paymentStatus;
+      return matchesSearch && matchesOrderStatus && matchesPaymentStatus;
+    });
+  }, [orderStatus, orders, paymentStatus, query]);
 
   if (loading || sellerContextLoading || dataLoading) {
     return (
@@ -72,26 +114,6 @@ export default function OrdersPage() {
     );
   }
 
-  const orderStatuses = ['All', 'placed', 'processing', 'shipped', 'delivered', 'cancelled'];
-  const paymentStatuses = ['All', 'pending', 'paid_test', 'paid', 'failed'];
-  const searchTerm = query.trim().toLowerCase();
-
-  const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.id.toLowerCase().includes(searchTerm) ||
-      order.customerName.toLowerCase().includes(searchTerm) ||
-      order.customerEmail.toLowerCase().includes(searchTerm) ||
-      order.customerPhone.toLowerCase().includes(searchTerm) ||
-      order.items.some((item) =>
-        item.productName.toLowerCase().includes(searchTerm) ||
-        (item.sellerName ?? '').toLowerCase().includes(searchTerm) ||
-        (item.shopName ?? '').toLowerCase().includes(searchTerm)
-      );
-    const matchesOrderStatus = orderStatus === 'All' || order.orderStatus === orderStatus;
-    const matchesPaymentStatus = paymentStatus === 'All' || order.paymentStatus === paymentStatus;
-    return matchesSearch && matchesOrderStatus && matchesPaymentStatus;
-  });
-
   const isAdmin = role === 'admin';
   const pageTitle = isAdmin ? 'All Orders' : 'My Orders';
   const pageDescription = isAdmin 
@@ -100,7 +122,7 @@ export default function OrdersPage() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto w-full max-w-7xl space-y-8">
+      <div className="mx-auto w-full max-w-7xl space-y-6">
         {/* Header */}
         <PageHeader
           title={pageTitle}

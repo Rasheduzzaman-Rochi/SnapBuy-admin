@@ -12,6 +12,7 @@ import {
   LogOut,
   Store,
   Plus,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,6 +23,11 @@ interface MenuItem {
   label: string;
   href: string;
   icon: React.ReactNode | any;
+}
+
+interface SidebarProps {
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 const adminMenuItems: MenuItem[] = [
@@ -41,7 +47,7 @@ const sellerMenuItems: MenuItem[] = [
   { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
-export function Sidebar() {
+export function Sidebar({ isMobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { role, loading } = useAuth();
@@ -51,15 +57,16 @@ export function Sidebar() {
 
   const handleLogout = async () => {
     await logout();
+    onMobileClose?.();
     router.push('/login');
   };
 
   const roleLabel = isAdmin ? 'Admin Panel' : 'Seller Panel';
 
-  return (
-    <aside className="hidden md:fixed md:left-0 md:top-0 md:z-40 md:flex md:h-screen md:w-64 md:flex-col md:border-r md:border-slate-200 md:bg-white md:text-slate-900 md:shadow-sm dark:md:border-slate-800 dark:md:bg-slate-950 dark:md:text-slate-100">
+  const sidebarContent = (
+    <>
       {/* Logo Section */}
-      <div className="px-6 py-8 border-b border-slate-200 dark:border-slate-800">
+      <div className="px-5 py-5 md:px-6 md:py-8 border-b border-slate-200 dark:border-slate-800">
         <Link href="/" className="flex items-center gap-3">
           <Logo size="md" subtitle={loading ? 'Loading...' : roleLabel} />
         </Link>
@@ -76,6 +83,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onMobileClose}
               className={cn(
                 'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
                 isActive
@@ -100,6 +108,36 @@ export function Sidebar() {
           <span>Logout</span>
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      <aside className="hidden md:fixed md:left-0 md:top-0 md:z-40 md:flex md:h-screen md:w-64 md:flex-col md:border-r md:border-slate-200 md:bg-white md:text-slate-900 md:shadow-sm dark:md:border-slate-800 dark:md:bg-slate-950 dark:md:text-slate-100">
+        {sidebarContent}
+      </aside>
+
+      {isMobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-950/50"
+            aria-label="Close navigation"
+            onClick={onMobileClose}
+          />
+          <aside className="relative flex h-full w-72 max-w-[85vw] flex-col border-r border-slate-200 bg-white text-slate-900 shadow-xl dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100">
+            <button
+              type="button"
+              className="absolute right-3 top-3 rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+              onClick={onMobileClose}
+              aria-label="Close navigation"
+            >
+              <X size={20} />
+            </button>
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

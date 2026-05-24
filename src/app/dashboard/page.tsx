@@ -1,14 +1,14 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Package, ShoppingCart, DollarSign, Clock, AlertCircle, Users, CheckCircle } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { RecentOrdersTable } from '@/components/dashboard/RecentOrdersTable';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAuth } from '@/hooks/useAuth';
 import { useSellerContext } from '@/hooks/useSellerContext';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getProducts } from '@/services/productService';
 import { getOrders } from '@/services/orderService';
 import { getAllUsers } from '@/services/userService';
@@ -17,6 +17,15 @@ import { Product } from '@/types/product';
 import { Order } from '@/types/order';
 import { User } from '@/types/user';
 import { SellerApplication } from '@/types/seller';
+
+const RecentOrdersTable = dynamic(
+  () => import('@/components/dashboard/RecentOrdersTable').then((mod) => mod.RecentOrdersTable),
+  {
+    loading: () => (
+      <div className="h-48 animate-pulse rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-800 dark:bg-slate-900" />
+    ),
+  }
+);
 
 export default function DashboardPage() {
   const { user, role, loading } = useAuth();
@@ -27,9 +36,20 @@ export default function DashboardPage() {
   const [dataLoading, setDataLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { sellerContext, loading: sellerContextLoading } = useSellerContext(user, role);
+  const uid = user?.uid;
+  const email = user?.email;
+  const sellerShopName = sellerContext?.shopName ?? '';
+  const fetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading || sellerContextLoading || !role) return;
+
+    if (role !== 'admin' && role !== 'approved') return;
+    if (role === 'approved' && !uid) return;
+
+    const fetchKey = `${role}:${uid ?? 'admin'}:${sellerShopName}`;
+    if (fetchKeyRef.current === fetchKey) return;
+    fetchKeyRef.current = fetchKey;
 
     let mounted = true;
 
@@ -38,32 +58,23 @@ export default function DashboardPage() {
         setDataLoading(true);
         setError(null);
 
-        const [loadedProducts, loadedOrders] = await Promise.all([
-          getProducts(role, user?.uid, sellerContext),
-          getOrders(role, user?.uid, sellerContext),
-        ]);
+        const sellerLookupContext = role === 'approved'
+          ? { uid: uid ?? '', email, shopName: sellerShopName }
+          : null;
 
-        if (role === 'approved') {
-          console.log('Filtered seller products count:', loadedProducts.length);
-          console.log('Filtered seller orders count:', loadedOrders.length);
-        }
+        const [loadedProducts, loadedOrders, loadedUsers, loadedApplications] = await Promise.all([
+          getProducts(role, uid, sellerLookupContext),
+          getOrders(role, uid, sellerLookupContext),
+          role === 'admin' ? getAllUsers() : Promise.resolve([]),
+          role === 'admin' ? getSellerApplications() : Promise.resolve([]),
+        ]);
 
         if (!mounted) return;
 
         setProducts(loadedProducts);
         setOrders(loadedOrders);
-
-        if (role === 'admin') {
-          const [loadedUsers, loadedApplications] = await Promise.all([
-            getAllUsers(),
-            getSellerApplications(),
-          ]);
-
-          if (!mounted) return;
-
-          setUsers(loadedUsers);
-          setSellerApplications(loadedApplications);
-        }
+        setUsers(loadedUsers);
+        setSellerApplications(loadedApplications);
       } catch (err: any) {
         if (mounted) setError(err?.message || 'Failed to load dashboard data.');
       } finally {
@@ -76,7 +87,7 @@ export default function DashboardPage() {
     return () => {
       mounted = false;
     };
-  }, [loading, role, sellerContext, sellerContextLoading, user?.uid]);
+  }, [email, loading, role, sellerContextLoading, sellerShopName, uid]);
 
   if (loading || sellerContextLoading || dataLoading) {
     return (
@@ -107,7 +118,7 @@ export default function DashboardPage() {
   if (role === 'admin') {
     return (
       <DashboardLayout>
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Page Header */}
           <PageHeader
             title="Dashboard"
@@ -179,7 +190,7 @@ export default function DashboardPage() {
   // Render Seller Dashboard
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Page Header */}
         <PageHeader
           title="My Dashboard"

@@ -6,20 +6,45 @@ import { useEffect, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Logo } from '@/components/common/Logo';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { role, loading: authLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [pendingRedirect, setPendingRedirect] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    console.log('Login page loaded');
   }, []);
+
+  useEffect(() => {
+    if (!pendingRedirect || authLoading || !role) return;
+
+    if (role === 'admin' || role === 'approved') {
+      router.push('/dashboard');
+      return;
+    }
+
+    if (role === 'pending') {
+      router.push('/pending-approval');
+      return;
+    }
+
+    if (role === 'rejected') {
+      setError('Your seller application has been rejected. Please contact support.');
+      setLoading(false);
+      setPendingRedirect(false);
+      return;
+    }
+
+    router.push('/register-seller');
+  }, [authLoading, pendingRedirect, role, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,27 +57,7 @@ export default function LoginPage() {
       const result = await loginWithEmail(email, password);
 
       if (result.success) {
-        // Route based on role
-        const role = result.user?.role;
-        console.log('Resolved role:', role);
-        console.log('🔐 Login successful! User role:', role);
-        console.log('📍 Redirecting to appropriate page...');
-        
-        if (role === 'admin' || role === 'approved') {
-          console.log('✅ Admin/Seller detected → Redirecting to /dashboard');
-          router.push('/dashboard');
-        } else if (role === 'pending') {
-          console.log('⏳ Pending seller → Redirecting to /pending-approval');
-          router.push('/pending-approval');
-        } else if (role === 'rejected') {
-          console.log('❌ Rejected seller → Showing error');
-          setError('Your seller application has been rejected. Please contact support.');
-          setLoading(false);
-        } else {
-          console.log('⚠️ No role found → Redirecting to /register-seller');
-          // No role yet, redirect to seller registration
-          router.push('/register-seller');
-        }
+        setPendingRedirect(true);
       } else {
         setError(result.error || 'Login failed');
         setLoading(false);

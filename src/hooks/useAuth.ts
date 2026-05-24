@@ -5,51 +5,162 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import {
+  createContext,
+  createElement,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthChange, AuthUser, UserRole } from '@/services/authService';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '@/lib/firebaseAuth';
+import type { AuthUser, UserRole, AdminProfile } from '@/services/authService';
+import type { SellerApplication } from '@/types/seller';
+import { getSellerShopName, type SellerContext } from '@/lib/sellerOwnership';
 
 export interface UseAuthReturn {
   user: AuthUser | null;
   role: UserRole | null;
+  adminProfile: AdminProfile | null;
+  sellerProfile: SellerApplication | null;
+  sellerContext: SellerContext | null;
   loading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isSeller: boolean;
   isPending: boolean;
+  refreshRole: () => Promise<void>;
+}
+
+const AuthContext = createContext<UseAuthReturn | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [firebaseUser, setFirebaseUser] = useState<AuthUser | null>(null);
+  const [role, setRole] = useState<UserRole | null>(null);
+  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
+  const [sellerProfile, setSellerProfile] = useState<SellerApplication | null>(null);
+  const [loading, setLoading] = useState(true);
+  const loadedUidRef = useRef<string | null>(null);
+
+  const loadRoleAndProfiles = useCallback(async (user: AuthUser | null, force = false) => {
+    if (!user) {
+      loadedUidRef.current = null;
+      setFirebaseUser(null);
+      setRole(null);
+      setAdminProfile(null);
+      setSellerProfile(null);
+      return;
+    }
+
+    if (!force && loadedUidRef.current === user.uid) {
+      return;
+    }
+
+    const { getAdminProfile, getUserAccessRole } = await import('@/services/authService');
+    const nextRole = await getUserAccessRole(user.uid);
+    const nextUser = { ...user, role: nextRole } as AuthUser;
+    loadedUidRef.current = user.uid;
+
+    setFirebaseUser(nextUser);
+    setRole(nextRole);
+
+    if (nextRole === 'admin') {
+      const profile = await getAdminProfile(user.uid);
+      setAdminProfile(profile);
+      setSellerProfile(null);
+      return;
+    }
+
+    setAdminProfile(null);
+
+    if (nextRole === 'approved' || nextRole === 'pending' || nextRole === 'rejected') {
+      const { getSellerApplication } = await import('@/services/sellerService');
+      const profile = await getSellerApplication(user.uid);
+      setSellerProfile(profile);
+      return;
+    }
+
+    setSellerProfile(null);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      try {
+        if (!mounted) return;
+        setLoading(true);
+        await loadRoleAndProfiles(user as AuthUser | null);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [loadRoleAndProfiles]);
+
+  const refreshRole = useCallback(async () => {
+    setLoading(true);
+    try {
+      await loadRoleAndProfiles(auth.currentUser as AuthUser | null, true);
+    } finally {
+      setLoading(false);
+    }
+  }, [loadRoleAndProfiles]);
+
+  const sellerContext = useMemo<SellerContext | null>(() => {
+    if (!firebaseUser || role !== 'approved') return null;
+
+    return {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      shopName: getSellerShopName(firebaseUser.email, sellerProfile?.shopName),
+    };
+  }, [firebaseUser, role, sellerProfile?.shopName]);
+
+  const value = useMemo<UseAuthReturn>(() => {
+    const isAuthenticated = !!firebaseUser;
+    const isAdmin = role === 'admin';
+    const isSeller = role === 'approved';
+    const isPending = role === 'pending';
+
+    return {
+      user: firebaseUser,
+      role,
+      adminProfile,
+      sellerProfile,
+      sellerContext,
+      loading,
+      isAuthenticated,
+      isAdmin,
+      isSeller,
+      isPending,
+      refreshRole,
+    };
+  }, [adminProfile, firebaseUser, loading, refreshRole, role, sellerContext, sellerProfile]);
+
+  return createElement(AuthContext.Provider, { value }, children);
 }
 
 /**
  * Hook to get current auth state and role
  */
 export function useAuth(): UseAuthReturn {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const context = useContext(AuthContext);
 
-  useEffect(() => {
-    const unsubscribe = onAuthChange((authUser) => {
-      setUser(authUser);
-      setLoading(false);
-    });
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
 
-    return () => unsubscribe();
-  }, []);
-
-  const role = user?.role || null;
-  const isAuthenticated = !!user;
-  const isAdmin = role === 'admin';
-  const isSeller = role === 'approved';
-  const isPending = role === 'pending';
-
-  return {
-    user,
-    role,
-    loading,
-    isAuthenticated,
-    isAdmin,
-    isSeller,
-    isPending,
-  };
+  return context;
 }
 
 /**

@@ -15,7 +15,7 @@ import {
   updateDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebaseDb';
 import { SellerApplication } from '@/types/seller';
 import { toMillis } from '@/lib/utils';
 

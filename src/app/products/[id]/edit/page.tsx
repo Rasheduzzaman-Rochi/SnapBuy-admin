@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { use, useEffect, useRef, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProductForm } from '@/components/products/ProductForm';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -25,6 +25,10 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   const [notFound, setNotFound] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const uid = user?.uid;
+  const email = user?.email;
+  const sellerShopName = sellerContext?.shopName ?? '';
+  const fetchKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (loading || sellerContextLoading || !role) return;
@@ -33,6 +37,12 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       setAccessDenied(true);
       return;
     }
+
+    if (role === 'approved' && !uid) return;
+
+    const fetchKey = `${id}:${role}:${uid ?? 'admin'}:${sellerShopName}`;
+    if (fetchKeyRef.current === fetchKey) return;
+    fetchKeyRef.current = fetchKey;
 
     let mounted = true;
 
@@ -53,7 +63,11 @@ export default function EditProductPage({ params }: EditProductPageProps) {
           return;
         }
 
-        if (role !== 'admin' && (!sellerContext || !productBelongsToSeller(loadedProduct, sellerContext))) {
+        const sellerLookupContext = role === 'approved'
+          ? { uid: uid ?? '', email, shopName: sellerShopName }
+          : null;
+
+        if (role !== 'admin' && (!sellerLookupContext || !productBelongsToSeller(loadedProduct, sellerLookupContext))) {
           setAccessDenied(true);
           setProduct(null);
           return;
@@ -72,7 +86,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     return () => {
       mounted = false;
     };
-  }, [id, loading, role, sellerContext, sellerContextLoading]);
+  }, [email, id, loading, role, sellerContextLoading, sellerShopName, uid]);
 
   const handleSubmit = async (data: Partial<Product>) => {
     const result = await updateProduct(id, data);
@@ -123,7 +137,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto w-full max-w-6xl space-y-8">
+      <div className="mx-auto w-full max-w-6xl space-y-6">
         {/* Header */}
         <PageHeader
           title="Edit Product"

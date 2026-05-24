@@ -7,7 +7,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDashboardSearch } from '@/components/providers/DashboardSearchProvider';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
-export function Topbar() {
+interface TopbarProps {
+  onMenuClick?: () => void;
+}
+
+export function Topbar({ onMenuClick }: TopbarProps) {
   const pathname = usePathname();
   const { user, role, loading } = useAuth();
   const { query, setQuery } = useDashboardSearch();
@@ -34,18 +38,23 @@ export function Topbar() {
   const displayName = user?.displayName || user?.email || 'User';
 
   return (
-    <header className="md:ml-64 sticky top-0 z-30 flex h-16 w-full items-center border-b border-slate-200 bg-white/90 backdrop-blur-md transition-colors dark:border-slate-800 dark:bg-slate-950/90">
-      <div className="grid h-16 w-full grid-cols-[auto_minmax(280px,1fr)_auto] items-center gap-4 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-30 w-full border-b border-slate-200 bg-white/90 backdrop-blur-md transition-colors dark:border-slate-800 dark:bg-slate-950/90 md:ml-64 md:w-[calc(100%-16rem)]">
+      <div className="grid w-full grid-cols-[auto_auto] items-center gap-3 px-4 py-3 sm:px-6 md:h-16 md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-4 md:py-0 lg:px-8">
         {/* Left Menu / Spacer */}
-        <div className="flex items-center min-w-0">
-          <button className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-900 md:hidden">
+        <div className="flex min-w-0 items-center">
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="rounded-lg p-2 hover:bg-slate-100 dark:hover:bg-slate-900 md:hidden"
+            aria-label="Open navigation"
+          >
             <Menu size={20} className="text-slate-600 dark:text-slate-300" />
           </button>
           <div className="hidden md:block h-10 w-10" aria-hidden="true" />
         </div>
 
         {/* Centered Search */}
-        <div className="flex w-full justify-center">
+        <div className="col-span-2 row-start-2 flex w-full justify-center md:col-span-1 md:col-start-2 md:row-start-1 md:min-w-0">
           <div className="relative mx-auto w-full max-w-2xl">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors dark:text-slate-500" />
             <input
@@ -59,7 +68,7 @@ export function Topbar() {
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2 sm:gap-4 justify-self-end">
+        <div className="flex items-center gap-2 justify-self-end sm:gap-4 md:col-start-3">
           <ThemeToggle />
 
           {/* Notification Icon */}
@@ -73,7 +82,7 @@ export function Topbar() {
             {user && (
               <>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{displayName}</p>
+                  <p className="max-w-40 truncate text-sm font-medium text-slate-900 dark:text-slate-100">{displayName}</p>
                   <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full ${roleBadgeColor}`}>
                     {roleLabel}
                   </span>
