@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Logo } from '@/components/common/Logo';
+import { PENDING_SELLER_APPLICATION_FORM_KEY } from '@/lib/sellerApplicationStorage';
 
 export default function RegisterSellerPage() {
   const router = useRouter();
@@ -59,6 +60,20 @@ export default function RegisterSellerPage() {
         // Redirect to pending approval page
         router.push('/pending-approval');
       } else {
+        if (result.code === 'auth/email-already-in-use') {
+          window.localStorage.setItem(PENDING_SELLER_APPLICATION_FORM_KEY, JSON.stringify({
+            name: formData.fullName.trim(),
+            email: formData.email.trim(),
+            mobile: mobileNumber,
+            phone: formData.shopPhone.trim() || mobileNumber,
+            shopName: formData.shopName.trim(),
+            address: formData.address.trim(),
+            category: formData.category,
+          }));
+          router.push(`/login?next=apply-seller&email=${encodeURIComponent(formData.email.trim())}`);
+          return;
+        }
+
         setError(result.error || 'Registration failed');
         setLoading(false);
       }

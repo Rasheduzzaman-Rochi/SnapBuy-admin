@@ -14,12 +14,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
       <Sidebar isMobileOpen={isMobileSidebarOpen} onMobileClose={() => setIsMobileSidebarOpen(false)} />
-      <Topbar onMenuClick={() => setIsMobileSidebarOpen(true)} />
-      <main className="flex-1 overflow-y-auto md:ml-64">
-        <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
-          {children}
-        </div>
-      </main>
+      <div className="min-h-screen md:pl-64">
+        <Topbar onMenuClick={() => setIsMobileSidebarOpen(true)} />
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

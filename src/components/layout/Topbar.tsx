@@ -38,7 +38,7 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const displayName = user?.displayName || user?.email || 'User';
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-slate-200 bg-white/90 backdrop-blur-md transition-colors dark:border-slate-800 dark:bg-slate-950/90 md:ml-64 md:w-[calc(100%-16rem)]">
+    <header className="sticky top-0 z-30 w-full border-b border-slate-200 bg-white/90 backdrop-blur-md transition-colors dark:border-slate-800 dark:bg-slate-950/90">
       <div className="grid w-full grid-cols-[auto_auto] items-center gap-3 px-4 py-3 sm:px-6 md:h-16 md:grid-cols-[auto_minmax(0,1fr)_auto] md:gap-4 md:py-0 lg:px-8">
         {/* Left Menu / Spacer */}
         <div className="flex min-w-0 items-center">

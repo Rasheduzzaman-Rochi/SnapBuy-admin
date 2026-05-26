@@ -15,7 +15,8 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebaseAuth';
 import { db } from '@/lib/firebaseDb';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+import { createSellerApplicationForUser, type SellerApplicationFormData } from '@/services/sellerService';
 
 export type UserRole = 'admin' | 'approved' | 'pending' | 'rejected' | 'none';
 
@@ -106,9 +107,18 @@ export async function loginWithEmail(email: string, password: string) {
     };
   } catch (error: any) {
     console.error('Login error:', error.message);
+    const errorCode = error.code || '';
+    const friendlyMessage =
+      errorCode === 'auth/wrong-password' || errorCode === 'auth/invalid-credential'
+        ? 'Password is incorrect. Please try again or reset your password.'
+        : errorCode === 'auth/user-not-found'
+          ? 'No account found with this email.'
+          : error.message || 'Login failed';
+
     return {
       success: false,
-      error: error.message || 'Login failed',
+      code: errorCode,
+      error: friendlyMessage,
     };
   }
 }
@@ -119,66 +129,27 @@ export async function loginWithEmail(email: string, password: string) {
 export async function registerSeller(
   email: string,
   password: string,
-  sellerData: {
-    name: string;
-    mobile: string;
-    shopName: string;
-    phone: string;
-    address: string;
-    category: string;
-  }
+  sellerData: SellerApplicationFormData
 ) {
   try {
     // Create user account
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const uid = userCredential.user.uid;
-    const name = sellerData.name.trim();
-    const mobile = sellerData.mobile.trim();
-    const shopPhone = sellerData.phone.trim() || mobile;
-
-    // Create/update buyer/general user profile for mobile app compatibility.
-    await setDoc(doc(db, 'users', uid), {
-      uid,
-      name,
-      email,
-      mobile,
-      phone: mobile,
-      provider: 'password',
-      accountType: 'buyer',
-      sellerStatus: 'pending',
-      isSeller: false,
-      status: 'active',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    }, { merge: true });
-
-    // Create seller application
-    await setDoc(doc(db, 'sellerApplications', uid), {
-      uid,
-      email,
-      ownerName: name,
-      mobile,
-      phone: shopPhone,
-      shopName: sellerData.shopName.trim(),
-      address: sellerData.address.trim(),
-      category: sellerData.category,
-      status: 'pending',
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      approvedAt: null,
-      approvedBy: null,
-      rejectedAt: null,
-      rejectedBy: null,
-    });
+    await createSellerApplicationForUser(userCredential.user, sellerData, { includeUserCreatedAt: true });
 
     return {
       success: true,
-      uid,
+      uid: userCredential.user.uid,
     };
   } catch (error: any) {
+    const errorCode = error.code || '';
+    const friendlyMessage = errorCode === 'auth/email-already-in-use'
+      ? 'This email already has an account. Please login with this email to apply as a seller again.'
+      : error.message || 'Registration failed';
+
     return {
       success: false,
-      error: error.message || 'Registration failed',
+      code: errorCode,
+      error: friendlyMessage,
     };
   }
 }

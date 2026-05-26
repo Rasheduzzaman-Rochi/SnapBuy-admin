@@ -21,6 +21,15 @@ import { db } from '@/lib/firebaseDb';
 import { SellerApplication } from '@/types/seller';
 import { toMillis } from '@/lib/utils';
 
+export interface SellerApplicationFormData {
+  name: string;
+  mobile: string;
+  phone?: string;
+  shopName: string;
+  address: string;
+  category: string;
+}
+
 function mapSellerApplication(docId: string, data: any): SellerApplication {
   return {
     uid: docId,
@@ -40,6 +49,56 @@ function mapSellerApplication(docId: string, data: any): SellerApplication {
     rejectedBy: data.rejectedBy ?? null,
     rejectionReason: data.rejectionReason ?? null,
   };
+}
+
+export async function createSellerApplicationForUser(
+  user: { uid: string; email?: string | null },
+  formData: SellerApplicationFormData,
+  options?: { includeUserCreatedAt?: boolean }
+) {
+  const name = formData.name.trim();
+  const mobile = formData.mobile.trim();
+  const email = user.email ?? '';
+  const shopPhone = formData.phone?.trim() || mobile;
+  const userPayload: Record<string, any> = {
+    uid: user.uid,
+    name,
+    email,
+    mobile,
+    phone: mobile,
+    provider: 'password',
+    accountType: 'buyer',
+    sellerStatus: 'pending',
+    isSeller: false,
+    status: 'active',
+    updatedAt: serverTimestamp(),
+  };
+
+  if (options?.includeUserCreatedAt) {
+    userPayload.createdAt = serverTimestamp();
+  }
+
+  await setDoc(doc(db, 'users', user.uid), userPayload, { merge: true });
+
+  await setDoc(doc(db, 'sellerApplications', user.uid), {
+    uid: user.uid,
+    email,
+    ownerName: name,
+    mobile,
+    phone: shopPhone,
+    shopName: formData.shopName.trim(),
+    address: formData.address.trim(),
+    category: formData.category,
+    status: 'pending',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    approvedAt: null,
+    approvedBy: null,
+    rejectedAt: null,
+    rejectedBy: null,
+  });
+
+  return { success: true };
 }
 
 /**

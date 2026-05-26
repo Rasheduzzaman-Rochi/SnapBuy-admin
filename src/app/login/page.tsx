@@ -2,15 +2,16 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Logo } from '@/components/common/Logo';
 import { useAuth } from '@/hooks/useAuth';
+import { PENDING_SELLER_APPLICATION_FORM_KEY } from '@/lib/sellerApplicationStorage';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { role, loading: authLoading } = useAuth();
+  const { user, role, loading: authLoading, refreshRole } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,13 +19,61 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [pendingRedirect, setPendingRedirect] = useState(false);
+  const [nextAction, setNextAction] = useState<string | null>(null);
+  const applyingSellerRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get('next');
+    const emailParam = params.get('email');
+
+    setNextAction(next);
+    if (emailParam) {
+      setEmail(emailParam);
+    }
   }, []);
 
   useEffect(() => {
     if (!pendingRedirect || authLoading || !role) return;
+
+    if (nextAction === 'apply-seller') {
+      if (!user || applyingSellerRef.current) return;
+      applyingSellerRef.current = true;
+
+      async function continueSellerApplication() {
+        try {
+          const pendingFormJson = window.localStorage.getItem(PENDING_SELLER_APPLICATION_FORM_KEY);
+
+          if (!pendingFormJson) {
+            throw new Error('Seller application details were not found. Please fill out the seller application again.');
+          }
+
+          const pendingForm = JSON.parse(pendingFormJson);
+          const expectedEmail = pendingForm.email?.toString().trim().toLowerCase();
+          const loggedInEmail = user.email?.trim().toLowerCase();
+
+          if (expectedEmail && loggedInEmail !== expectedEmail) {
+            throw new Error('Please login with the same email you used on the seller application form.');
+          }
+
+          const { createSellerApplicationForUser } = await import('@/services/sellerService');
+
+          await createSellerApplicationForUser(user, pendingForm);
+          window.localStorage.removeItem(PENDING_SELLER_APPLICATION_FORM_KEY);
+          await refreshRole();
+          router.push('/pending-approval');
+        } catch (err: any) {
+          setError(err.message || 'Could not continue seller application.');
+          setLoading(false);
+          setPendingRedirect(false);
+          applyingSellerRef.current = false;
+        }
+      }
+
+      continueSellerApplication();
+      return;
+    }
 
     if (role === 'admin' || role === 'approved') {
       router.push('/dashboard');
@@ -44,7 +93,7 @@ export default function LoginPage() {
     }
 
     router.push('/register-seller');
-  }, [authLoading, pendingRedirect, role, router]);
+  }, [authLoading, nextAction, pendingRedirect, refreshRole, role, router, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,6 +182,12 @@ export default function LoginPage() {
               </div>
             )}
 
+            {nextAction === 'apply-seller' && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-500/20 dark:bg-blue-500/10 dark:text-blue-100">
+                This email already has an account. Login with the same email to continue your seller application.
+              </div>
+            )}
+
             {/* Info Note */}
             {/* Submit Button */}
             <button
@@ -140,7 +195,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 py-2.5 font-semibold text-white transition-all hover:from-blue-700 hover:to-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? 'Logging in...' : nextAction === 'apply-seller' ? 'Login and Continue Application' : 'Login'}
             </button>
           </form>
 

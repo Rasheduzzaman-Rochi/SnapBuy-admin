@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Clock, ArrowLeft } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Logo } from '@/components/common/Logo';
 
 export default function PendingApprovalPage() {
   return (
@@ -10,6 +11,9 @@ export default function PendingApprovalPage() {
       <div className="mx-auto flex w-full max-w-md flex-col">
         <div className="mb-6 flex justify-end">
           <ThemeToggle />
+        </div>
+        <div className="mb-6 flex justify-center">
+          <Logo size="md" subtitle="Seller Application" />
         </div>
         {/* Card */}
         <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900 md:p-12">
