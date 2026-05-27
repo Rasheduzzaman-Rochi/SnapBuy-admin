@@ -214,10 +214,6 @@ These can be implemented by:
 
 Example:
 ```typescript
-// Before (mock data)
-import { mockProducts } from '@/data/mockData';
-
-// After (real Firebase data)
 import { getProducts } from '@/services/productService';
 import { useAuth } from '@/hooks/useAuth';
 

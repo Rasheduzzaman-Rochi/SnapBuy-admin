@@ -114,7 +114,7 @@ export default function Home() {
       <div className="mt-16 border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
           <p className="text-center text-slate-600 dark:text-slate-400">
-            © 2024 SnapBuy Admin. Built with modern design principles for optimal user experience.
+            © 2026 SnapBuy Admin. All rights reserved.
           </p>
         </div>
       </div>

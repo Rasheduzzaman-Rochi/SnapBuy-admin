@@ -82,7 +82,7 @@
 
 /**
  * 1. src/app/login/page.tsx
- *    - Removed mock auth (validateLogin)
+ *    - Removed legacy mock authentication
  *    - Added Firebase Auth (loginWithEmail)
  *    - Role-based routing after login
  *    - Removed quick login demo buttons
