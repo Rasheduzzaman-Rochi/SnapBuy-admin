@@ -126,10 +126,8 @@ export default function LoginPage() {
         {/* Card */}
         <div className="w-full rounded-xl border border-slate-200 bg-white p-8 shadow-lg dark:border-slate-800 dark:bg-slate-900">
           {/* Logo */}
-          <div className="mb-8 flex flex-col items-center justify-center text-center">
-            <Logo showText={false} size="lg" className="justify-center" />
-            <h1 className="mt-4 text-3xl font-bold text-slate-900 dark:text-white">SnapBuy</h1>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Admin & Seller Dashboard</p>
+          <div className="mb-8 flex justify-center">
+            <Logo size="lg" subtitle="Admin & Seller Dashboard" />
           </div>
 
           {/* Form */}

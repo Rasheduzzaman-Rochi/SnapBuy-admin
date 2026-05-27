@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { Logo } from '@/components/common/Logo';
 import { PENDING_SELLER_APPLICATION_FORM_KEY } from '@/lib/sellerApplicationStorage';
 
 export default function RegisterSellerPage() {
@@ -97,8 +97,21 @@ export default function RegisterSellerPage() {
             <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
             Back to Home
           </Link>
-          <div className="mb-6 flex justify-center">
-            <Logo size="lg" subtitle="Seller Registration" />
+          <div className="mb-6">
+            <div className="mx-auto flex w-fit items-center justify-center gap-3">
+              <Image
+                src="/snapbuy-logo.png"
+                alt="SnapBuy"
+                width={64}
+                height={64}
+                priority
+                className="h-14 w-14 scale-110 object-contain"
+              />
+              <div className="text-left leading-tight">
+                <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-white">SnapBuy</h1>
+                <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">Seller Registration</p>
+              </div>
+            </div>
           </div>
           <h1 className="text-4xl font-bold text-slate-900 mb-2 dark:text-white">Become a Seller</h1>
           <p className="text-lg text-slate-600 dark:text-slate-400">Join SnapBuy and grow your business</p>
